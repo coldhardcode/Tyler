@@ -7,27 +7,34 @@ class TylerServletSpec extends MutableScalatraSpec {
 
   addServlet(classOf[TylerServlet], "/*")
 
-  "GET / on Tyler" should {
-    "return status 200" in {
+  "Servlet" should {
+
+    "return status 200 on GET of /" in {
       get("/") {
         status must_== 200
       }
     }
-  }
 
-  "GET of non-existent URL on Tyler" should {
-    "return status 404" in {
+    "return status 404 on GET of none-existent URL" in {
       get("/isnthere") {
-        status must_== 404
+        status mustEqual 404
       }
     }
-  }
   
-  "POST to action" should {
-    "create action status 200" in {
+    "have a sane lifecycle" in {
       post("/user/1/action", "{\"name\":\"completed-test\"}") {
-        status must_== 200
+        status mustEqual 200
+      }
+    
+      get("/user/1/actions", Tuple("search", "completed-test")) {
+        status mustEqual 200
+      }
+
+      val params = List()
+      delete("/user/1", params) {
+        status mustEqual 200
       }
     }
+    
   }
 }

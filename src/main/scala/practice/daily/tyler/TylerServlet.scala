@@ -6,13 +6,13 @@ import net.liftweb.json._
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.{read,write}
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.{Jedis,JedisPool}
 import scala.collection.JavaConversions._
 
 class TylerServlet extends ScalatraServlet {
 
   implicit val formats = DefaultFormats
-  val jedis : Jedis = new Jedis("localhost")
+  val jedisPool : JedisPool = new JedisPool("localhost", 6379)
 
   // What the fuck is a case class?
   case class Action(name: String)
@@ -32,6 +32,8 @@ class TylerServlet extends ScalatraServlet {
 
   post("/user/:id/action") {
   
+    val jedis = jedisPool.getResource
+  
     val json = parse(request.body)
     val act = json.extract[Action]
 
@@ -41,8 +43,10 @@ class TylerServlet extends ScalatraServlet {
     val trans = jedis.multi
     
     // Increment the count for this event
-    trans.incr(getUserKey(userId, actName))
+    println("incr " + getUserKey(userId, "action-count/" + actName))
+    trans.incr(getUserKey(userId, "action-count/" + actName))
     // Add it to the timeline
+    println("lpush " + getUserKey(userId, "timeline"))
     trans.lpush(getUserKey(userId, "timeline"), request.body)
     // Trim the timeline
     trans.ltrim(getUserKey(userId, "timeline"), 0, 99)
@@ -53,13 +57,16 @@ class TylerServlet extends ScalatraServlet {
   }
   
   get("/user/:id/actions") {
-      
+
+    val jedis = jedisPool.getResource
+
     val userId = params("id")
 
     val search = params.getOrElse("search", "*")
 
     // Fetch all the keys we can find
-    val keys = jedis.keys(getUserKey(userId, "/action-count/" + search))
+    println("keys " + getUserKey(userId, "action-count/" + search))
+    val keys = jedis.keys(getUserKey(userId, "action-count/" + search))
     
     // Return a 404 since we have nothing to return
     if(keys.size < 1) {
@@ -77,6 +84,8 @@ class TylerServlet extends ScalatraServlet {
   }
 
   get("/user/:id/timeline") {
+
+    val jedis = jedisPool.getResource
       
     val userId = params("id")
 
@@ -86,11 +95,11 @@ class TylerServlet extends ScalatraServlet {
     val start = (page - 1) * count
     val end = (page * count) - 1
     
-    println("### LRANGE " + getUserKey(userId, "timeline") + " " + start + " " + end)
-    
+    println("lrange " + getUserKey(userId, "timeline") + " " + start + " " + end)
     // Fetch the values for our keys
     val timeline = jedis.lrange(getUserKey(userId, "timeline"), start, end)
 
+    // XXX
     println(timeline)
 
     // Return a 404 since we have nothing to return
@@ -104,7 +113,27 @@ class TylerServlet extends ScalatraServlet {
   }
 
   delete("/user/:id") {
+
+    val jedis = jedisPool.getResource
+
+    val userId = params("id")
       
+    println("del " + getUserKey(userId, "timeline"))
+    // Nix the timeline
+    jedis.del(getUserKey(userId, "timeline"))
+      
+    // Fetch all the keys we can find
+    println(getUserKey(userId, "action-count/*"))
+    val keys = jedis.keys(getUserKey(userId, "action-count/*"))
+    println(keys)
+
+    if(keys.size < 1) {
+      // Nothing to delete
+      halt(status = 404)
+    }
+
+    // Delete all the keys we got earlier
+    jedis.del(keys.toSeq : _*)
   }
 
   notFound {
