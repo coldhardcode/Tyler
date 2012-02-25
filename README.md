@@ -57,7 +57,8 @@ New actions will be vivified if they do not exist, incremented if they do.
 
 ## Key Names
 
-User Action counters: user/:userid/action-count/:actionname
+User Action counters: `user/:userid/action-count/:actionname`
+Timeline: `user/:userid/timeline`
 
 User Timeline: user/:userid/timeline
 
