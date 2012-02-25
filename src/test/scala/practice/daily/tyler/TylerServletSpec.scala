@@ -26,7 +26,12 @@ class TylerServletSpec extends MutableScalatraSpec {
       post("/user/1/action", "{\"name\":\"completed-test\"}") {
         status mustEqual 200
       }
-    
+
+      get("/user/1/timeline") {
+        body mustEqual "[{\"name\":\"completed-test\"}]"
+        status mustEqual 200
+      }
+
       get("/user/1/actions", Tuple("search", "completed-test")) {
         body mustEqual "{\"completed-test\":\"1\"}"
         status mustEqual 200
@@ -34,6 +39,11 @@ class TylerServletSpec extends MutableScalatraSpec {
 
       // Post a second action
       post("/user/1/action", "{\"name\":\"completed-test\"}") {
+        status mustEqual 200
+      }
+
+      get("/user/1/timeline") {
+        body mustEqual "[{\"name\":\"completed-test\"},{\"name\":\"completed-test\"}]"
         status mustEqual 200
       }
 
