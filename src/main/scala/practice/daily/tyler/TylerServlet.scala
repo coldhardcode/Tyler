@@ -72,12 +72,17 @@ class TylerServlet extends ScalatraServlet {
     if(keys.size < 1) {
         halt(status = 404)
     }
+    
+    // Name the keys something simple for our client
+    val newKeys = keys.map(x => {
+        x.takeRight(x.length - x.lastIndexOf("/") - 1)
+    })
   
     // Fetch the values for our keys
     val values = jedis.mget(keys.toSeq : _*)
 
     // Zip together our two Sets into a collection of Tuples then toMap it
-    val keysAndValues = (keys zip values) toMap
+    val keysAndValues = (newKeys zip values) toMap
 
     // Let JSON-LIFT dump it out for us
     compact(render(decompose(keysAndValues)))

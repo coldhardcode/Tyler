@@ -31,6 +31,13 @@ The data posted **must** have a name key.  This should follow the aforementioned
 Accepts wildcards
 
     curl -v 'http://127.0.0.1:8080/user/1/actions?search=$actio*' -H "Content-Type: application/json"
+    
+Returns a map of action names and counts, like this:
+
+    {
+      "action-name": "1",
+      "other-action-name": "2"
+    }
 
 ### Retrieving A User's Timeline
     
@@ -50,10 +57,6 @@ New actions will be vivified if they do not exist, incremented if they do.
 
 * Count of actions
 * Count of timeline events
-* Count of actions by date
-* Count of timeline events by date
-* Count of actions in last 5, 15, 30m
-* Count of timeline events in last 5, 15, 30m
 
 ## Key Names
 
