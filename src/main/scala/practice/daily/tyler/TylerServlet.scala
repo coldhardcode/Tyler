@@ -1,5 +1,7 @@
 package practice.daily.tyler
 
+import com.twitter.logging.{Level, Logger}
+import com.twitter.logging.config._
 import java.util.ArrayList
 import org.scalatra._
 import net.liftweb.json._
@@ -13,13 +15,23 @@ class TylerServlet extends ScalatraServlet {
 
   implicit val formats = DefaultFormats
   val jedisPool : JedisPool = new JedisPool("localhost", 6379)
+  private val log = Logger.get(getClass)
 
   // What the fuck is a case class?
   case class Action(name: String)
 
+  val config = new LoggerConfig {
+    node = ""
+    level = Level.DEBUG
+    handlers = new SyslogHandlerConfig {
+      server = "localhost"
+    }
+  }
+  Logger.configure(config)
+
   def getUserKey(userId: String, key: String): String = {
       
-      return "user/" + userId + "/" + key
+    return "user/" + userId + "/" + key
   }
 
   get("/") {
@@ -43,10 +55,10 @@ class TylerServlet extends ScalatraServlet {
     val trans = jedis.multi
     
     // Increment the count for this event
-    println("incr " + getUserKey(userId, "action-count/" + actName))
+    log(Level.DEBUG, "incr " + getUserKey(userId, "action-count/" + actName))
     trans.incr(getUserKey(userId, "action-count/" + actName))
     // Add it to the timeline
-    println("lpush " + getUserKey(userId, "timeline"))
+    log(Level.DEBUG, "lpush " + getUserKey(userId, "timeline"))
     trans.lpush(getUserKey(userId, "timeline"), request.body)
     // Trim the timeline
     trans.ltrim(getUserKey(userId, "timeline"), 0, 99)
@@ -67,13 +79,14 @@ class TylerServlet extends ScalatraServlet {
     val search = params.getOrElse("search", "*")
 
     // Fetch all the keys we can find
-    println("keys " + getUserKey(userId, "action-count/" + search))
+    log(Level.DEBUG, "keys " + getUserKey(userId, "action-count/" + search))
     val keys = jedis.keys(getUserKey(userId, "action-count/" + search))
     
     // Return a 404 since we have nothing to return
     if(keys.size < 1) {
-        jedisPool.returnResource(jedis)
-        halt(status = 404)
+      log(Level.WARNING, "Attempt get actions for non-existent or inactive user: " + userId)
+      jedisPool.returnResource(jedis)
+      halt(status = 404)
     }
     
     // Name the keys something simple for our client
@@ -107,7 +120,7 @@ class TylerServlet extends ScalatraServlet {
     val start = (page - 1) * count
     val end = (page * count) - 1
     
-    println("lrange " + getUserKey(userId, "timeline") + " " + start + " " + end)
+    log(Level.DEBUG, "lrange " + getUserKey(userId, "timeline") + " " + start + " " + end)
     // Fetch the values for our keys
     val timeline = jedis.lrange(getUserKey(userId, "timeline"), start, end)
 
@@ -115,7 +128,8 @@ class TylerServlet extends ScalatraServlet {
 
     // Return a 404 since we have nothing to return
     if(timeline.size < 1) {
-        halt(status = 404)
+      log(Level.WARNING, "Attempt get timeline for non-existent or inactive user: " + userId)
+      halt(status = 404)
     }
 
     status(200);
@@ -131,22 +145,22 @@ class TylerServlet extends ScalatraServlet {
 
     val userId = params("id")
       
-    println("del " + getUserKey(userId, "timeline"))
+    log(Level.DEBUG, "del " + getUserKey(userId, "timeline"))
     // Nix the timeline
     jedis.del(getUserKey(userId, "timeline"))
       
     // Fetch all the keys we can find
-    println("keys " + getUserKey(userId, "action-count/*"))
+    log(Level.DEBUG, "keys " + getUserKey(userId, "action-count/*"))
     val keys = jedis.keys(getUserKey(userId, "action-count/*"))
-    println(keys)
 
     if(keys.size < 1) {
+      log(Level.WARNING, "Attempt to delete non-existent user: " + userId)
       jedisPool.returnResource(jedis)
       // Nothing to delete
       halt(status = 404)
     }
 
-    println("del " + keys)
+    log(Level.DEBUG, "del " + keys)
     // Delete all the keys we got earlier
     jedis.del(keys.toSeq : _*)
     
