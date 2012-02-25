@@ -84,6 +84,8 @@ class TylerServlet extends ScalatraServlet {
     // Zip together our two Sets into a collection of Tuples then toMap it
     val keysAndValues = (newKeys zip values) toMap
 
+    status(200);
+
     // Let JSON-LIFT dump it out for us
     compact(render(decompose(keysAndValues)))
   }
@@ -104,17 +106,16 @@ class TylerServlet extends ScalatraServlet {
     // Fetch the values for our keys
     val timeline = jedis.lrange(getUserKey(userId, "timeline"), start, end)
 
-    // XXX
-    println(timeline)
-
     // Return a 404 since we have nothing to return
     if(timeline.size < 1) {
         halt(status = 404)
     }
 
-    // XXX NOT WORKING!
+    status(200);
+
     // Let JSON-LIFT dump it out for us
-    compact(render(decompose(timeline)))
+    compact(render(decompose(asScalaBuffer(timeline))))
+
   }
 
   delete("/user/:id") {
@@ -140,6 +141,8 @@ class TylerServlet extends ScalatraServlet {
     println("del " + keys)
     // Delete all the keys we got earlier
     jedis.del(keys.toSeq : _*)
+    
+    status(200)
   }
 
   notFound {
