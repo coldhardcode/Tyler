@@ -123,7 +123,7 @@ class TylerServlet extends ScalatraServlet {
     jedis.del(getUserKey(userId, "timeline"))
       
     // Fetch all the keys we can find
-    println(getUserKey(userId, "action-count/*"))
+    println("keys " + getUserKey(userId, "action-count/*"))
     val keys = jedis.keys(getUserKey(userId, "action-count/*"))
     println(keys)
 
@@ -132,6 +132,7 @@ class TylerServlet extends ScalatraServlet {
       halt(status = 404)
     }
 
+    println("del " + keys)
     // Delete all the keys we got earlier
     jedis.del(keys.toSeq : _*)
   }
