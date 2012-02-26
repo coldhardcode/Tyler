@@ -24,7 +24,7 @@ class TylerServlet extends ScalatraServlet {
     node = ""
     level = Level.DEBUG
     handlers = new SyslogHandlerConfig {
-      server = "localhost"
+      // server = "localhost"
     }
   }
   Logger.configure(config)
@@ -42,18 +42,21 @@ class TylerServlet extends ScalatraServlet {
     </html>
   }
 
+  /**
+   * Create an action
+   */
   post("/user/:id/action") {
   
     val jedis = jedisPool.getResource
-  
+
     val json = parse(request.body)
     val act = json.extract[Action]
 
     val userId = params("id")
     val actName = act.name
-    
+
     val trans = jedis.multi
-    
+
     // Increment the count for this event
     log(Level.DEBUG, "incr " + getUserKey(userId, "action-count/" + actName))
     trans.incr(getUserKey(userId, "action-count/" + actName))
@@ -64,12 +67,14 @@ class TylerServlet extends ScalatraServlet {
     trans.ltrim(getUserKey(userId, "timeline"), 0, 99)
 
     trans.exec
-    
     jedisPool.returnResource(jedis)
     
     status(200);
   }
   
+  /**
+   * Get action counts for user
+   */
   get("/user/:id/actions") {
 
     val jedis = jedisPool.getResource
@@ -108,6 +113,9 @@ class TylerServlet extends ScalatraServlet {
     compact(render(decompose(keysAndValues)))
   }
 
+  /**
+   * Get a user's timeline
+   */
   get("/user/:id/timeline") {
 
     val jedis = jedisPool.getResource
@@ -139,6 +147,9 @@ class TylerServlet extends ScalatraServlet {
     "[" + asScalaBuffer(timeline).mkString(",") + "]"
   }
 
+  /**
+   * Delete all traces of a user
+   */
   delete("/user/:id") {
 
     val jedis = jedisPool.getResource
