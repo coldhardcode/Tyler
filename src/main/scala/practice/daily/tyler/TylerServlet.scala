@@ -9,7 +9,12 @@ import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.{read,write}
 import redis.clients.jedis.{Jedis,JedisPool}
+import redis.clients.jedis.exceptions.{JedisConnectionException}
 import scala.collection.JavaConversions._
+import scala.collection.mutable._
+
+// What the fuck is a case class?
+case class Action(name: String)
 
 class TylerServlet extends ScalatraServlet {
 
@@ -17,8 +22,6 @@ class TylerServlet extends ScalatraServlet {
   val jedisPool : JedisPool = new JedisPool("localhost", 6379)
   private val log = Logger.get(getClass)
 
-  // What the fuck is a case class?
-  case class Action(name: String)
 
   val config = new LoggerConfig {
     node = ""
@@ -118,33 +121,43 @@ class TylerServlet extends ScalatraServlet {
    */
   get("/user/:id/timeline") {
 
-    val jedis = jedisPool.getResource
-      
     val userId = params("id")
 
-    val page = params.getOrElse("page", "1").toInt
-    val count = params.getOrElse("count", "10").toInt
+    val timeline : Option[Buffer[String]] = try {
+      val jedis = jedisPool.getResource
+      
+      val page = params.getOrElse("page", "1").toInt
+      val count = params.getOrElse("count", "10").toInt
 
-    val start = (page - 1) * count
-    val end = (page * count) - 1
+      val start = (page - 1) * count
+      val end = (page * count) - 1
     
-    log(Level.DEBUG, "lrange " + getUserKey(userId, "timeline") + " " + start + " " + end)
-    // Fetch the values for our keys
-    val timeline = jedis.lrange(getUserKey(userId, "timeline"), start, end)
-
-    jedisPool.returnResource(jedis)
-
-    // Return a 404 since we have nothing to return
-    if(timeline.size < 1) {
-      log(Level.WARNING, "Attempt get timeline for non-existent or inactive user: " + userId)
-      halt(status = 404)
+      log(Level.DEBUG, "lrange " + getUserKey(userId, "timeline") + " " + start + " " + end)
+      // Fetch the values for our keys
+      val timeline = jedis.lrange(getUserKey(userId, "timeline"), start, end)
+        
+      jedisPool.returnResource(jedis)
+        
+      if(timeline.size < 1) {
+        None
+      } else {
+        Option(asScalaBuffer(timeline))
+      }
+    } catch {
+      case e: JedisConnectionException => { log(Level.CRITICAL, "Redis connection failed", e); None }
     }
-
-    status(200);
-    
-    // The timeline is already encoded as JSON so just convert the list into
-    // a string with mkString
-    "[" + asScalaBuffer(timeline).mkString(",") + "]"
+    // Return a 404 since we have nothing to return
+    timeline match {
+      case Some(tl) => {
+       // The timeline is already encoded as JSON so just convert the list into
+       // a string with mkString
+       "[" + tl.mkString(",") + "]"
+      }
+      case None => {
+        log(Level.WARNING, "Attempt get timeline for non-existent or inactive user: " + userId)
+        halt(status = 404)
+      }
+    }
   }
 
   /**
