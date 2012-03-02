@@ -54,9 +54,9 @@ class TylerServlet extends ScalatraServlet {
         val json = parse(request.body)
         val act = json.extract[Action]
 
-        val board = new Scoreboard(params("id"), jedis)
+        val board = new Scoreboard(userId = params("id"), jedis = jedis)
 
-        val success = board.addAction(act.name, request.body)
+        val success = board.addAction(name = act.name, action = request.body)
 
         jedisPool.returnResource(jedis)
 
@@ -72,9 +72,9 @@ class TylerServlet extends ScalatraServlet {
 
         var jedis = jedisPool.getResource
         
-        val board = new Scoreboard(params("id"), jedis)
+        val board = new Scoreboard(userId = params("id"), jedis = jedis)
 
-        val actions = board.getActionCount(params.getOrElse("search", "*"))
+        val actions = board.getActionCount(actionName = params.getOrElse("search", "*"))
 
         jedisPool.returnResource(jedis)
 
@@ -95,31 +95,11 @@ class TylerServlet extends ScalatraServlet {
     */
     get("/user/:id/timeline") {
 
-        val userId = params("id")
-
-        val timeline : Option[Buffer[String]] = try {
-            val jedis = jedisPool.getResource
-
-            val page = params.getOrElse("page", "1").toInt
-            val count = params.getOrElse("count", "10").toInt
-
-            val start = (page - 1) * count
-            val end = (page * count) - 1
-
-            log(Level.DEBUG, "lrange " + getUserKey(userId, "timeline") + " " + start + " " + end)
-            // Fetch the values for our keys
-            val timeline = jedis.lrange(getUserKey(userId, "timeline"), start, end)
-
-            jedisPool.returnResource(jedis)
-
-            if(timeline.size < 1) {
-                None
-            } else {
-                Option(asScalaBuffer(timeline))
-            }
-        } catch {
-            case e: JedisConnectionException => { log(Level.CRITICAL, "Redis connection failed", e); None }
-        }
+        val jedis = jedisPool.getResource
+        val board = new Scoreboard(userId = params("id"), jedis = jedis)
+        jedisPool.returnResource(jedis)
+        
+        val timeline = board.getTimeline(page = params.getOrElse("page", "1").toInt, count = params.getOrElse("count", "10").toInt)
     
         // Return a 404 since we have nothing to return
         timeline match {
@@ -129,7 +109,7 @@ class TylerServlet extends ScalatraServlet {
                 "[" + tl.mkString(",") + "]"
             }
             case None => {
-                log(Level.WARNING, "Attempt get timeline for non-existent or inactive user: " + userId)
+                log(Level.WARNING, "Attempt get timeline for non-existent or inactive user: " + params("id"))
                 halt(status = 404)
             }
         }
@@ -142,30 +122,16 @@ class TylerServlet extends ScalatraServlet {
 
         val jedis = jedisPool.getResource
 
-        val userId = params("id")
-
-        log(Level.DEBUG, "del " + getUserKey(userId, "timeline"))
-        // Nix the timeline
-        jedis.del(getUserKey(userId, "timeline"))
-
-        // Fetch all the keys we can find
-        log(Level.DEBUG, "keys " + getUserKey(userId, "action-count/*"))
-        val keys = jedis.keys(getUserKey(userId, "action-count/*"))
-
-        if(keys.size < 1) {
-            log(Level.WARNING, "Attempt to delete non-existent user: " + userId)
-            jedisPool.returnResource(jedis)
-            // Nothing to delete
-            halt(status = 404)
-        }
-
-        log(Level.DEBUG, "del " + keys)
-        // Delete all the keys we got earlier
-        jedis.del(keys.toSeq : _*)
+        val board = new Scoreboard(userId = params("id"), jedis = jedis)
+        val success = board.purge
 
         jedisPool.returnResource(jedis)
 
-        status(200)
+        if(!success) {
+            log(Level.WARNING, "Attempt to delete non-existent user: " + params("id"))
+            // Nothing to delete
+            halt(status = 404)
+        }
     }
 
     notFound {

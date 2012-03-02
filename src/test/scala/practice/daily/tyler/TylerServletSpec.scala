@@ -36,40 +36,40 @@ class TylerServletSpec extends MutableScalatraSpec {
         body mustEqual "{\"completed-test\":\"1\"}"
         status mustEqual 200
       }
-
+      
       // Post a second action
       post("/user/1/action", "{\"name\":\"completed-test\"}") {
         status mustEqual 200
       }
-
+      
       get("/user/1/timeline") {
         body mustEqual "[{\"name\":\"completed-test\"},{\"name\":\"completed-test\"}]"
         status mustEqual 200
       }
-
+      
       // Check the count again, should be 2
       get("/user/1/actions", Tuple("search", "completed-test")) {
         body mustEqual "{\"completed-test\":\"2\"}"
         status mustEqual 200
       }
-
+      
       // Now add a second action
       post("/user/1/action", "{\"name\":\"completed-test2\"}") {
         status mustEqual 200
       }
-
+      
       // Check the count again, should be 2
       get("/user/1/actions", Tuple("search", "completed*")) {
-
+      
         println(body)
         val counts = JsonParser.parse(body)
         // Verify counts of each are returned properly
         counts.values.asInstanceOf[Map[String,Any]]("completed-test") mustEqual "2"
         counts.values.asInstanceOf[Map[String,Any]]("completed-test2") mustEqual "1"
-
+      
         status mustEqual 200
       }
-
+      
       val params = List()
       delete("/user/1", params) {
         status mustEqual 200

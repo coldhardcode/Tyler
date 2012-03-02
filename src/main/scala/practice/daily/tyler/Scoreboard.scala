@@ -3,6 +3,8 @@ package practice.daily.tyler
 import com.twitter.logging.{Level, Logger}
 import redis.clients.jedis.Jedis
 import scala.collection.JavaConversions._
+import scala.collection.immutable._
+import scala.collection.mutable.Buffer
 
 class Scoreboard(val userId:String, val jedis:Jedis) {
 
@@ -60,5 +62,45 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
          // Zip together our two Sets into a collection of Tuples then conver it
          // to a map with toMap
          Option((newKeys zip values) toMap)
+    }
+
+    /**
+    * Get a user's timeline
+    */
+    def getTimeline(page : Int = 1, count : Int = 10) : Option[Buffer[String]] = {
+
+        val start = (page - 1) * count
+        val end = (page * count) - 1
+
+        log(Level.DEBUG, "lrange " + getUserKey("timeline") + " " + start + " " + end)
+        // Fetch the values for our keys
+        val timeline = jedis.lrange(getUserKey("timeline"), start, end)
+
+        if(timeline.size < 1) {
+            return None
+        }
+
+        return Option(asScalaBuffer(timeline))
+    }
+    
+    def purge() : Boolean = {
+
+        log(Level.DEBUG, "del " + getUserKey("timeline"))
+        // Nix the timeline
+        jedis.del(getUserKey("timeline"))
+
+        // Fetch all the keys we can find
+        log(Level.DEBUG, "keys " + getUserKey("action-count/*"))
+        val keys = jedis.keys(getUserKey("action-count/*"))
+
+        if(keys.size < 1) {
+            return false;
+        }
+
+        log(Level.DEBUG, "del " + keys)
+        // Delete all the keys we got earlier
+        jedis.del(keys.toSeq : _*)
+
+        true
     }
 }
