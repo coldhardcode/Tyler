@@ -49,16 +49,14 @@ class TylerServlet extends ScalatraServlet {
     */
     post("/user/:id/action") {
 
-        val jedis = jedisPool.getResource
 
         val json = parse(request.body)
         val act = json.extract[Action]
 
-        val board = new Scoreboard(userId = params("id"), jedis = jedis)
-
-        val success = board.addAction(name = act.name, action = request.body)
-
-        jedisPool.returnResource(jedis)
+        val success : Boolean = useRedis { jedis =>
+            val board = new Scoreboard(userId = params("id"), jedis = jedis)
+            board.addAction(name = act.name, action = request.body)
+        }
 
         if(!success) {
             halt(status = 500)
@@ -70,13 +68,10 @@ class TylerServlet extends ScalatraServlet {
     */
     get("/user/:id/actions") {
 
-        var jedis = jedisPool.getResource
-        
-        val board = new Scoreboard(userId = params("id"), jedis = jedis)
-
-        val actions = board.getActionCount(actionName = params.getOrElse("search", "*"))
-
-        jedisPool.returnResource(jedis)
+        val actions = useRedis { jedis =>
+            val board = new Scoreboard(userId = params("id"), jedis = jedis)
+            board.getActionCount(actionName = params.getOrElse("search", "*"))
+        }
 
         actions match {
             case Some(list) => {
@@ -95,11 +90,10 @@ class TylerServlet extends ScalatraServlet {
     */
     get("/user/:id/timeline") {
 
-        val jedis = jedisPool.getResource
-        val board = new Scoreboard(userId = params("id"), jedis = jedis)
-        jedisPool.returnResource(jedis)
-        
-        val timeline = board.getTimeline(page = params.getOrElse("page", "1").toInt, count = params.getOrElse("count", "10").toInt)
+        val timeline = useRedis { jedis =>
+            val board = new Scoreboard(userId = params("id"), jedis = jedis)
+            board.getTimeline(page = params.getOrElse("page", "1").toInt, count = params.getOrElse("count", "10").toInt)
+        }
     
         // Return a 404 since we have nothing to return
         timeline match {
@@ -120,17 +114,29 @@ class TylerServlet extends ScalatraServlet {
     */
     delete("/user/:id") {
 
-        val jedis = jedisPool.getResource
-
-        val board = new Scoreboard(userId = params("id"), jedis = jedis)
-        val success = board.purge
-
-        jedisPool.returnResource(jedis)
+        val success = useRedis { jedis =>
+            val board = new Scoreboard(userId = params("id"), jedis = jedis)
+            board.purge
+        }
 
         if(!success) {
             log(Level.WARNING, "Attempt to delete non-existent user: " + params("id"))
             // Nothing to delete
             halt(status = 404)
+        }
+    }
+    
+    // What the fuck is all this A shit?!? XX
+    def useRedis[A](op : Jedis => A) : A = {
+        
+        val jedis = jedisPool.getResource
+        try {
+            op(jedis)
+        // Can't even catch. Wtf.
+        // } catch {
+        //     case unknown => log(Level.CRITICAL, "Error in scoreboard: " + unknown)
+        } finally {
+            if (jedis != null) jedisPool.returnResource(jedis)
         }
     }
 

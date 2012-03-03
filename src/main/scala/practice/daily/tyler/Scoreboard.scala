@@ -21,13 +21,18 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
             val trans = jedis.multi
 
             // Increment the count for this event
-            log(Level.DEBUG, "incr " + getUserKey("action-count/" + name))
+            // log(Level.DEBUG, "incr " + getUserKey("action-count/" + name))
             trans.incr(getUserKey("action-count/" + name))
+
+            // Increment the global action-count
+            trans.incr("stats/action-count")
+            
             // Add it to the timeline
-            log(Level.DEBUG, "lpush " + getUserKey("timeline"))
+            // log(Level.DEBUG, "lpush " + getUserKey("timeline"))
             trans.lpush(getUserKey("timeline"), action)
             // Trim the timeline
             trans.ltrim(getUserKey("timeline"), 0, 99)
+            trans.incr("stats/timeline")
 
             trans.exec
         } catch {
@@ -40,7 +45,7 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
     def getActionCount(actionName:String) : Option[Map[String,String]] = {
         
          // Fetch all the keys we can find
-         log(Level.DEBUG, "keys " + getUserKey("action-count/" + actionName))
+         // log(Level.DEBUG, "keys " + getUserKey("action-count/" + actionName))
          val keys = jedis.keys(getUserKey("action-count/" + actionName))
 
          // Return a 404 since we have nothing to return
@@ -72,7 +77,7 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
         val start = (page - 1) * count
         val end = (page * count) - 1
 
-        log(Level.DEBUG, "lrange " + getUserKey("timeline") + " " + start + " " + end)
+        // log(Level.DEBUG, "lrange " + getUserKey("timeline") + " " + start + " " + end)
         // Fetch the values for our keys
         val timeline = jedis.lrange(getUserKey("timeline"), start, end)
 
@@ -85,19 +90,19 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
     
     def purge() : Boolean = {
 
-        log(Level.DEBUG, "del " + getUserKey("timeline"))
+        // log(Level.DEBUG, "del " + getUserKey("timeline"))
         // Nix the timeline
         jedis.del(getUserKey("timeline"))
 
         // Fetch all the keys we can find
-        log(Level.DEBUG, "keys " + getUserKey("action-count/*"))
+        // log(Level.DEBUG, "keys " + getUserKey("action-count/*"))
         val keys = jedis.keys(getUserKey("action-count/*"))
 
         if(keys.size < 1) {
             return false;
         }
 
-        log(Level.DEBUG, "del " + keys)
+        // log(Level.DEBUG, "del " + keys)
         // Delete all the keys we got earlier
         jedis.del(keys.toSeq : _*)
 
