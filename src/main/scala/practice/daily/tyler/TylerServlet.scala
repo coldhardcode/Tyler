@@ -19,7 +19,7 @@ case class Action(name: String)
 class TylerServlet extends ScalatraServlet {
 
     implicit val formats = DefaultFormats
-    val jedisPool : JedisPool = new JedisPool("localhost", 6379)
+    val jedisPool = new JedisPool("localhost", 6379)
     private val log = Logger.get(getClass)
 
     val config = new LoggerConfig {

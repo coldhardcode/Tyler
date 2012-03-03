@@ -22,10 +22,14 @@ class ScoreboardSpec extends Specification {
             jedis.get(board.getUserKey("action-count/fart")) must be equalTo("1")
         }
 
-        // What the fuck
-        jedis.disconnect
-        jedis.disconnect
+        "remove a user" in {
+            board.purge
+        }
+        
+        jedis.del("stats/action-count")
 
+        pool.returnResource(jedis)
+        pool.destroy
 
         // The above can't be last, so putting this to shut it up
         "wtf" in {

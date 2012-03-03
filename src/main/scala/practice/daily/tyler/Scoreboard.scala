@@ -31,7 +31,9 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
             // log(Level.DEBUG, "lpush " + getUserKey("timeline"))
             trans.lpush(getUserKey("timeline"), action)
             // Trim the timeline
+            // log(Level.DEBUG, "ltrim " + getUserKey("timeline") + "0 99")
             trans.ltrim(getUserKey("timeline"), 0, 99)
+            // log(Level.DEBUG, "incr stats/timeline")
             trans.incr("stats/timeline")
 
             trans.exec
