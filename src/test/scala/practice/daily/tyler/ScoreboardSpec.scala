@@ -16,18 +16,6 @@ class ScoreboardSpec extends Specification {
             board.getUserKey("timeline") must be equalTo("user/2/timeline")
         }
         
-        "add an action" in {
-            board.addAction(name = "fart", action = "{\"foo\":\"bar\"}")
-            
-            jedis.get(board.getUserKey("action-count/fart")) must be equalTo("1")
-        }
-
-        "remove a user" in {
-            board.purge
-        }
-        
-        jedis.del("stats/action-count")
-
         pool.returnResource(jedis)
         pool.destroy
 

@@ -55,8 +55,15 @@ New actions will be vivified if they do not exist, incremented if they do.
 
 ## Internal Stats
 
-* Count of actions
-* Count of timeline events
+* stats/add/action: Count of action adds
+
+* stats/add/timeline: Count of timeline adds
+
+* stats/get/action: Count of action gets
+
+* stats/get/timeline: Count of timeline gets
+
+* stats/purge/user: Count of user purges
 
 ## Key Names
 

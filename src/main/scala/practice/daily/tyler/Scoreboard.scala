@@ -24,8 +24,8 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
             // log(Level.DEBUG, "incr " + getUserKey("action-count/" + name))
             trans.incr(getUserKey("action-count/" + name))
 
-            // Increment the global action-count
-            trans.incr("stats/action-count")
+            // Increment the global action count
+            trans.incr("stats/add/action")
             
             // Add it to the timeline
             // log(Level.DEBUG, "lpush " + getUserKey("timeline"))
@@ -34,7 +34,8 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
             // log(Level.DEBUG, "ltrim " + getUserKey("timeline") + "0 99")
             trans.ltrim(getUserKey("timeline"), 0, 99)
             // log(Level.DEBUG, "incr stats/timeline")
-            trans.incr("stats/timeline")
+            // Increment the timeline count
+            trans.incr("stats/add/timeline")
 
             trans.exec
         } catch {
@@ -66,6 +67,9 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
          // toSeq converts our map to a Sequence, I dont' recall what _* is :(
          val values = jedis.mget(keys.toSeq : _*)
 
+         // Increment the global action count
+         jedis.incr("stats/get/action")
+
          // Zip together our two Sets into a collection of Tuples then conver it
          // to a map with toMap
          Option((newKeys zip values) toMap)
@@ -87,6 +91,9 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
             return None
         }
 
+        // Increment the global action count
+        jedis.incr("stats/get/timeline")
+
         return Option(asScalaBuffer(timeline))
     }
     
@@ -103,6 +110,9 @@ class Scoreboard(val userId:String, val jedis:Jedis) {
         if(keys.size < 1) {
             return false;
         }
+
+        // Increment the global action count
+        jedis.incr("stats/purge/user")
 
         // log(Level.DEBUG, "del " + keys)
         // Delete all the keys we got earlier
