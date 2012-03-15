@@ -20,7 +20,7 @@ class Scoreboard(val userId:String) {
 
         try {
 
-            val es = new ElasticSearch
+            val es = new ElasticSearch("tdp")
             val response = es.index(action)
 
         } catch {
@@ -36,7 +36,7 @@ class Scoreboard(val userId:String) {
          // log(Level.DEBUG, "keys " + getUserKey("action-count/" + actionName))
          // val keys = jedis.keys(getUserKey("action-count/" + actionName))
 
-         val es = new ElasticSearch
+         val es = new ElasticSearch("tdp")
          val response = es.getActionCounts(userId, actionName)
 
          println(response)
@@ -73,7 +73,7 @@ class Scoreboard(val userId:String) {
         val start = (page - 1) * count
         val end = (page * count) - 1
 
-        val es = new ElasticSearch
+        val es = new ElasticSearch("tdp")
         val response = es.getTimeline(userId)
 
         val json = parse(response)
@@ -100,10 +100,9 @@ class Scoreboard(val userId:String) {
     
     def purge() : Boolean = {
 
-
         try {
 
-            val es = new ElasticSearch
+            val es = new ElasticSearch("tdp")
             val response = es.delete(userId)
 
         } catch {

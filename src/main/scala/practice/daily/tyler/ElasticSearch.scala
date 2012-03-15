@@ -2,7 +2,7 @@ package practice.daily.tyler
 
 import com.twitter.logging.{Level,Logger}
 
-import java.io.{BufferedReader,InputStreamReader,OutputStreamWriter}
+import java.io.{BufferedReader,FileNotFoundException,InputStreamReader,OutputStreamWriter}
 import java.lang.StringBuilder
 import java.net.{URL,HttpURLConnection}
 import java.util.UUID
@@ -12,20 +12,24 @@ import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.{read,write}
 
 
-class ElasticSearch() {
+class ElasticSearch(val index : String) {
 
     val log = Logger.get(getClass)
     val host = "http://localhost:9200"
     
     def index(action : String) {
 
+        if(!this.verifyIndex) {
+            this.createIndex
+        }
+
         val uuid = UUID.randomUUID.toString
-        callES(path = "/tdp/actions/" + uuid, method = "PUT", toES = Some(action))
+        callES(path = "/" + index + "/actions/" + uuid, method = "PUT", toES = Some(action))
     }
     
     def getone(id : String) {
         
-        val url  = new URL(host + "/tdp/actions/" + id)
+        val url  = new URL(host + "/" + index + "/actions/" + id)
         val conn = url.openConnection.asInstanceOf[HttpURLConnection]
         conn.setRequestMethod("GET")
         conn.setDoOutput(true)
@@ -45,7 +49,7 @@ class ElasticSearch() {
 
     def getActionCounts(id : String, name : String) : String = {
         
-        val url  = new URL(host + "/tdp/actions/_search")
+        val url  = new URL(host + "/" + index + "/actions/_search")
         val conn = url.openConnection.asInstanceOf[HttpURLConnection]
         conn.setRequestMethod("GET")
         conn.setDoOutput(true)
@@ -79,7 +83,7 @@ class ElasticSearch() {
   
     def getTimeline(id : String) : String = {
         
-        val url  = new URL(host + "/tdp/actions/_search")
+        val url  = new URL(host + "/" + index + "/actions/_search")
         val conn = url.openConnection.asInstanceOf[HttpURLConnection]
         conn.setRequestMethod("GET")
         conn.setDoOutput(true)
@@ -110,7 +114,7 @@ class ElasticSearch() {
     
     def delete(id : String) {
         
-        val url  = new URL(host + "/tdp/actions/_query?q=user_id:" + id)
+        val url  = new URL(host + "/" + index + "/actions/_query?q=user_id:" + id)
         val conn = url.openConnection.asInstanceOf[HttpURLConnection]
         conn.setRequestMethod("DELETE")
         conn.setDoInput(true)
@@ -125,6 +129,24 @@ class ElasticSearch() {
         reader.close
         
         buffer.toString
+    }
+
+    def deleteIndex() : String = {
+        
+        log(Level.INFO, "Deleting index")
+        val response = callES(path = index, method = "DELETE")
+        response._2
+    }
+    
+    def verifyIndex() : Boolean = {
+        
+        log(Level.DEBUG, "Checking on index '" + index + "'")
+        val response = callES(path = index, method = "HEAD")
+        
+        if(response._1 == 200) {
+            return true
+        }
+        return false
     }
     
     def createIndex() {
@@ -152,10 +174,11 @@ class ElasticSearch() {
 
         // println(pretty(render(json)))
 
-        callES(path = "foobar", method = "POST", toES = Some(pretty(render(json))))
+        val response = callES(path = index, method = "POST", toES = Some(pretty(render(json))))
+        response._2
     }
     
-    private def callES(path : String, method : String = "GET", toES : Option[String] = None) : String = {
+    private def callES(path : String, method : String = "GET", toES : Option[String] = None) : (Int, String) = {
         
         val url  = new URL(host + "/" + path)
         val conn = url.openConnection.asInstanceOf[HttpURLConnection]
@@ -174,15 +197,23 @@ class ElasticSearch() {
             case None => // do nothing
         }
 
-        val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
-        var line = reader.readLine
-        val buffer = new StringBuilder()
-        while((line != null)) {
-            buffer.append(line)
-            line = reader.readLine
+        val stream = try {
+            conn.getInputStream
+        } catch {
+            case x : FileNotFoundException => conn.getErrorStream
         }
-        reader.close
+        val buffer = new StringBuilder("")
+
+        if(stream != null) {
+            val reader = new BufferedReader(new InputStreamReader(stream))
+            var line = reader.readLine
+            while((line != null)) {
+                buffer.append(line)
+                line = reader.readLine
+            }
+            reader.close
+        }
         
-        buffer.toString
+        (conn.getResponseCode, buffer.toString)
     }
 }
