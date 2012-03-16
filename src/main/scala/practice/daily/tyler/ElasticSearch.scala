@@ -1,6 +1,7 @@
 package practice.daily.tyler
 
 import com.twitter.logging.{Level,Logger}
+import com.twitter.logging.config._
 
 import java.io.{BufferedReader,FileNotFoundException,InputStreamReader,OutputStreamWriter}
 import java.lang.StringBuilder
@@ -17,11 +18,21 @@ class ElasticSearch(val index : String) {
     val log = Logger.get(getClass)
     val host = "http://localhost:9200"
     
+    val config = new LoggerConfig {
+        node = ""
+        level = Level.DEBUG
+        handlers = new ConsoleHandlerConfig {
+        // handlers = new SyslogHandlerConfig {
+          // server = "localhost"
+        }
+    }
+    Logger.configure(config)
+    
     def index(action : String) {
 
-        if(!this.verifyIndex) {
-            this.createIndex
-        }
+        // if(!this.verifyIndex) {
+        //     this.createIndex
+        // }
 
         val uuid = UUID.randomUUID.toString
         callES(path = "/" + index + "/actions/" + uuid, method = "PUT", toES = Some(action))
@@ -131,11 +142,14 @@ class ElasticSearch(val index : String) {
         buffer.toString
     }
 
-    def deleteIndex() : String = {
+    def deleteIndex() : Boolean = {
         
         log(Level.INFO, "Deleting index")
         val response = callES(path = index, method = "DELETE")
-        response._2
+        if(response._1 == 200) {
+            return true
+        }
+        return false
     }
     
     def verifyIndex() : Boolean = {
@@ -143,13 +157,14 @@ class ElasticSearch(val index : String) {
         log(Level.DEBUG, "Checking on index '" + index + "'")
         val response = callES(path = index, method = "HEAD")
         
+        log(Level.DEBUG, "Response was " + response._1)
         if(response._1 == 200) {
             return true
         }
-        return false
+        false
     }
     
-    def createIndex() {
+    def createIndex() : Boolean = {
 
         val action = Map("type" -> "string", "index" -> "not_analyzed")
         val timestamp = Map("type" -> "date", "format" -> "basic_date_time_no_millis") // yyyyMMdd'T'HHmmssZ
@@ -172,15 +187,19 @@ class ElasticSearch(val index : String) {
             )
         )
 
-        // println(pretty(render(json)))
+        log(Level.DEBUG, pretty(render(json)))
 
         val response = callES(path = index, method = "POST", toES = Some(pretty(render(json))))
-        response._2
+        if(response._1 == 200) {
+            return true
+        }
+        false
     }
     
     private def callES(path : String, method : String = "GET", toES : Option[String] = None) : (Int, String) = {
         
         val url  = new URL(host + "/" + path)
+        log(Level.DEBUG, method + " request to " + url.toString)
         val conn = url.openConnection.asInstanceOf[HttpURLConnection]
         conn.setRequestMethod(method)
         // Of course we want input
