@@ -85,6 +85,7 @@ class TylerServlet extends ScalatraServlet {
             case Some(tl) => {
                 // The timeline is already encoded as JSON so just convert the list into
                 // a string with mkString
+                log(Level.DEBUG, pretty(render(decompose(tl))))
                 compact(render(decompose(tl)))
             }
             case None => {

@@ -23,12 +23,14 @@ class TylerServletSpec extends MutableScalatraSpec {
         }
 
         "have a sane lifecycle" in {
-            post("/user/1/action", "{\"name\":\"completed-test\"}") {
+            post("/user/1/action", """{"name":"completed-test","user_id":"1"}""") {
                 status mustEqual 200
             }
 
+            Thread.sleep(1000)
+
             get("/user/1/timeline") {
-                body mustEqual "[{\"name\":\"completed-test\"}]"
+                body mustEqual """[{"name":"completed-test","user_id":"1"}]"""
                 status mustEqual 200
             }
             // 

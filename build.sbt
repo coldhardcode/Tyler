@@ -16,7 +16,7 @@ libraryDependencies ++= Seq(
 	"ch.qos.logback"              % "logback-classic"         % "1.0.0"           % "runtime",
 	"org.eclipse.jetty"           % "jetty-webapp"            % "7.5.4.v20111024" % "container",
 	"javax.servlet"               % "servlet-api"             % "2.5"             % "provided",
-	"net.liftweb"                 %% "lift-json"              % "2.4-M5",
+	"net.liftweb"                 %% "lift-json"              % "2.4",
 	"com.twitter"                 % "util-logging"            % "1.12.4"
 )
 

@@ -68,29 +68,29 @@ class Scoreboard(val userId:String) {
     /**
     * Get a user's timeline
     */
-    def getTimeline(page : Int = 1, count : Int = 10) : Option[List[JValue]] = {
+    def getTimeline(page : Int = 1, count : Int = 10) : Option[List[Map[String,Any]]] = {
 
         val start = (page - 1) * count
         val end = (page * count) - 1
 
         val es = new ElasticSearch("tdp")
-        val response = es.getTimeline(userId)
+        val timeline = es.getTimeline(userId)
 
-        val json = parse(response)
+        // val json = parse(response)
 
         // http://stackoverflow.com/questions/5073747/using-lift-json-is-there-an-easy-way-to-extract-and-traverse-a-list
 
-        val timeline = (json \ "hits" \ "hits").children
-        var size = 0
-        for (hit <- timeline) size += 1
+        // val timeline = (json \ "hits" \ "hits").children
+        // var size = 0
+        // for (hit <- timeline) size += 1
 
-        log(Level.DEBUG, "Size is " + size)
+        // log(Level.DEBUG, "Size is " + size)
 
         // log(Level.DEBUG, "lrange " + getUserKey("timeline") + " " + start + " " + end)
         // Fetch the values for our keys
         // val timeline = jedis.lrange(getUserKey("timeline"), start, end)
 
-        if(size < 1) {
+        if(timeline.size < 1) {
             return None
         }
 

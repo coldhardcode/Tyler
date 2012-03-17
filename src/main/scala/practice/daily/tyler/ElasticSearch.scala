@@ -12,12 +12,33 @@ import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.{read,write}
 
+// case class Hit(
+//     _index : Option[String],
+//     _type : Option[String],
+//     _id : Option[String],
+//     _score : Option[Float],
+//     _source : Option[Map[String,Any]]
+// )
+// 
+// case class Hits(
+//     total : Int,
+//     max_score : Option[Float],
+//     hits : Option[List[Hit]]
+// )
+// 
+// case class Result(
+//     took : Int,
+//     timed_out : Boolean,
+//     shards : Option[Map[String,String]],
+//     hits : Hits
+// )
 
 class ElasticSearch(val index : String) {
 
+    implicit val formats = DefaultFormats // Brings in default date formats etc.
     val log = Logger.get(getClass)
     val host = "http://localhost:9200"
-    
+
     val config = new LoggerConfig {
         node = ""
         level = Level.DEBUG
@@ -30,9 +51,9 @@ class ElasticSearch(val index : String) {
     
     def index(action : String) {
 
-        // if(!this.verifyIndex) {
-        //     this.createIndex
-        // }
+        if(!this.verifyIndex) {
+            this.createIndex
+        }
 
         val uuid = UUID.randomUUID.toString
         callES(path = "/" + index + "/actions/" + uuid, method = "PUT", toES = Some(action))
@@ -40,59 +61,41 @@ class ElasticSearch(val index : String) {
     
     def getone(id : String) {
         
-        val url  = new URL(host + "/" + index + "/actions/" + id)
-        val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-        conn.setRequestMethod("GET")
-        conn.setDoOutput(true)
-        conn.setDoInput(true)
-        
-        val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
-        var line = reader.readLine
-        val buffer = new StringBuilder()
-        while((line != null)) {
-            buffer.append(line)
-            line = reader.readLine
-        }
-        reader.close
-        
-        buffer.toString
+        val response = callES(path = "/" + index + "/actions/" + id, method = "GET")
+        response._2
     }
 
     def getActionCounts(id : String, name : String) : String = {
         
-        val url  = new URL(host + "/" + index + "/actions/_search")
-        val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-        conn.setRequestMethod("GET")
-        conn.setDoOutput(true)
-        conn.setDoInput(true)
-        val writer = new OutputStreamWriter(conn.getOutputStream)
-        writer.write("{" +
-            "\"query\": {" +
-                " \"match_all\": {}" +
-            "}," +
-            "\"filter\" : {" +
-                " \"term\" : { \"user_id\" : \"" + id + "\" }" +
-            "}," +
-            "\"facets\" : {" +
-                " \"actions\" : { \"terms\" : { \"field\": \"action\" } }" +
-            "}" +
-        "}")
-        writer.flush
+        val json = (
+            "query" -> (
+                ("match_all" -> Map.empty[String,String])
+            )
+        ) ~
+        (
+            "filter" -> (
+                "term" -> (
+                    "user_id" -> id
+                )
+            )
+        ) ~
+        (
+            "facets" -> (
+                "actions" -> (
+                    "terms" -> (
+                        "field" -> "action"
+                    )
+                )
+            )
+        )
+        log(Level.DEBUG, pretty(render(json)))
         
-        val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
-        var line = reader.readLine
-        val buffer = new StringBuilder()
-        while((line != null)) {
-            buffer.append(line)
-            line = reader.readLine
-        }
-        writer.close
-        reader.close
-        
-        buffer.toString
+        val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
+        log(Level.DEBUG, response._2)
+        response._2
     }
   
-    def getTimeline(id : String) : String = {
+    def getTimeline(id : String) : List[Map[String,Any]] = {
 
         val json = (
             "query" -> (
@@ -107,57 +110,24 @@ class ElasticSearch(val index : String) {
         log(Level.DEBUG, pretty(render(json)))
         
         val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
+
         log(Level.DEBUG, response._2)
-        response._2
-      
-        // 
-        // 
-        // val url  = new URL(host + "/" + index + "/actions/_search")
-        // val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-        // conn.setRequestMethod("GET")
-        // conn.setDoOutput(true)
-        // conn.setDoInput(true)
-        // val writer = new OutputStreamWriter(conn.getOutputStream)
-        // writer.write("{" +
-        //     "\"query\": {" +
-        //         " \"match_all\": {}" +
-        //     "}," +
-        //     "\"filter\" : {" +
-        //         " \"term\" : { \"user_id\" : \"" + id + "\" }" +
-        //     "}" +
-        // "}")
-        // writer.flush
-        // 
-        // val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
-        // var line = reader.readLine
-        // val buffer = new StringBuilder()
-        // while((line != null)) {
-        //     buffer.append(line)
-        //     line = reader.readLine
-        // }
-        // writer.close
-        // reader.close
-        // 
-        // buffer.toString
+        val resJson = parse(response._2)
+        
+        val foo = for { JField("_source", x) <- resJson } yield x
+        
+        println(foo.values)
+        
+        foo.values.asInstanceOf[List[Map[String,Any]]]
+        
+        // ((resJson \ "hits" \ "hits" \\ "_source").children).values.asInstanceOf[List[Map[String,Any]]]
     }
     
     def delete(id : String) {
         
-        val url  = new URL(host + "/" + index + "/actions/_query?q=user_id:" + id)
-        val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-        conn.setRequestMethod("DELETE")
-        conn.setDoInput(true)
-        
-        val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
-        var line = reader.readLine
-        val buffer = new StringBuilder()
-        while((line != null)) {
-            buffer.append(line)
-            line = reader.readLine
-        }
-        reader.close
-        
-        buffer.toString
+
+        val response = callES(path = "/" + index + "/actions/_query?q=user_id:" + id, method = "DELETE")
+        response._2
     }
 
     def deleteIndex() : Boolean = {
@@ -226,6 +196,8 @@ class ElasticSearch(val index : String) {
         toES match {
             case Some(x : String) => {
                 conn.setDoOutput(true)
+                log(Level.DEBUG, "Sending:")
+                log(Level.DEBUG, x)
                 val writer = new OutputStreamWriter(conn.getOutputStream)
                 writer.write(x)
                 writer.flush
