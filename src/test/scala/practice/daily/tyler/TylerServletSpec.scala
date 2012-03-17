@@ -23,59 +23,62 @@ class TylerServletSpec extends MutableScalatraSpec {
         }
 
         "have a sane lifecycle" in {
-            post("/user/1/action", """{"name":"completed-test","user_id":"1"}""") {
+            post("/user/1/action", """{"action":"completed-test","user_id":"1"}""") {
                 status mustEqual 200
             }
 
-            Thread.sleep(1000)
+            Thread.sleep(1000) // ES needs a bit of time to commit
 
             get("/user/1/timeline") {
-                body mustEqual """[{"name":"completed-test","user_id":"1"}]"""
+                body mustEqual """[{"action":"completed-test","user_id":"1"}]"""
                 status mustEqual 200
             }
-            // 
-            // get("/user/1/actions", Tuple("search", "completed-test")) {
-            //     body mustEqual "{\"completed-test\":\"1\"}"
-            //     status mustEqual 200
-            // }
-            // 
-            // // Post a second action
-            // post("/user/1/action", "{\"name\":\"completed-test\"}") {
-            //     status mustEqual 200
-            // }
-            // 
-            // get("/user/1/timeline") {
-            //     body mustEqual "[{\"name\":\"completed-test\"},{\"name\":\"completed-test\"}]"
-            //     status mustEqual 200
-            // }
-            // 
-            // // Check the count again, should be 2
-            // get("/user/1/actions", Tuple("search", "completed-test")) {
-            //     body mustEqual "{\"completed-test\":\"2\"}"
-            //     status mustEqual 200
-            // }
-            // 
-            // // Now add a second action
-            // post("/user/1/action", "{\"name\":\"completed-test2\"}") {
-            //     status mustEqual 200
-            // }
-            // 
-            // // Check the count again, should be 2
-            // get("/user/1/actions", Tuple("search", "completed*")) {
-            // 
-            //     println(body)
-            //     val counts = JsonParser.parse(body)
-            //     // Verify counts of each are returned properly
-            //     counts.values.asInstanceOf[Map[String,Any]]("completed-test") mustEqual "2"
-            //     counts.values.asInstanceOf[Map[String,Any]]("completed-test2") mustEqual "1"
-            // 
-            //     status mustEqual 200
-            // }
-            // 
-            // val params = List()
-            // delete("/user/1", params) {
-            //     status mustEqual 200
-            // }
+            
+            get("/user/1/actions", Tuple("search", "completed-test")) {
+                body mustEqual "{\"completed-test\":1}"
+                status mustEqual 200
+            }
+
+            // Post a second action
+            post("/user/1/action", "{\"action\":\"completed-test\",\"user_id\":\"1\"}") {
+                status mustEqual 200
+            }
+            
+            Thread.sleep(1000) // ES needs a bit of time to commit
+            
+            get("/user/1/timeline") {
+                body mustEqual "[{\"action\":\"completed-test\",\"user_id\":\"1\"},{\"action\":\"completed-test\",\"user_id\":\"1\"}]"
+                status mustEqual 200
+            }
+            
+            // Check the count again, should be 2
+            get("/user/1/actions", Tuple("search", "completed-test")) {
+                body mustEqual "{\"completed-test\":2}"
+                status mustEqual 200
+            }
+            
+            // Now add a second action
+            post("/user/1/action", "{\"action\":\"completed-test2\",\"user_id\":\"1\"}") {
+                status mustEqual 200
+            }
+            
+            Thread.sleep(1000) // ES needs a bit of time to commit
+            
+            // Check the count again, should be 2
+            get("/user/1/actions", Tuple("search", "completed*")) {
+            
+                val counts = JsonParser.parse(body)
+                // Verify counts of each are returned properly
+                counts.values.asInstanceOf[Map[String,Any]]("completed-test") mustEqual 2
+                counts.values.asInstanceOf[Map[String,Any]]("completed-test2") mustEqual 1
+            
+                status mustEqual 200
+            }
+            
+            val params = List()
+            delete("/user/1", params) {
+                status mustEqual 200
+            }
         }
     }
 }

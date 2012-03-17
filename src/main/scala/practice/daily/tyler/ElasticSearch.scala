@@ -65,11 +65,13 @@ class ElasticSearch(val index : String) {
         response._2
     }
 
-    def getActionCounts(id : String, name : String) : String = {
+    def getActionCounts(id : String, name : String) : Option[Map[String,BigInt]] = {
         
         val json = (
             "query" -> (
-                ("match_all" -> Map.empty[String,String])
+                "wildcard" -> (
+                    "action" -> name
+                )
             )
         ) ~
         (
@@ -85,14 +87,28 @@ class ElasticSearch(val index : String) {
                     "terms" -> (
                         "field" -> "action"
                     )
+                ) ~
+                (
+                    "facet_filter" -> (
+                        "term" -> (
+                            "user_id" -> id
+                        )
+                    )
                 )
             )
         )
         log(Level.DEBUG, pretty(render(json)))
         
         val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
-        log(Level.DEBUG, response._2)
-        response._2
+
+        val resJson = parse(response._2)
+
+        val actions = resJson \ "facets" \ "actions" \ "terms"
+        
+        val terms = for { JField("term", JString(term)) <- resJson } yield term
+        val counts = for { JField("count", JInt(count)) <- resJson } yield count
+
+        Option((terms zip counts) toMap)
     }
   
     def getTimeline(id : String) : List[Map[String,Any]] = {
@@ -111,16 +127,11 @@ class ElasticSearch(val index : String) {
         
         val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
 
-        log(Level.DEBUG, response._2)
         val resJson = parse(response._2)
         
-        val foo = for { JField("_source", x) <- resJson } yield x
+        val tl = for { JField("_source", x) <- resJson } yield x
         
-        println(foo.values)
-        
-        foo.values.asInstanceOf[List[Map[String,Any]]]
-        
-        // ((resJson \ "hits" \ "hits" \\ "_source").children).values.asInstanceOf[List[Map[String,Any]]]
+        tl.values.asInstanceOf[List[Map[String,Any]]]
     }
     
     def delete(id : String) {
@@ -159,7 +170,7 @@ class ElasticSearch(val index : String) {
 
         val json = (
             "mappings" -> (
-                "action" -> (
+                "actions" -> (
                     "properties" -> (
                         ("action"   -> action) ~
                         ("timestamp"-> timestamp) ~
@@ -174,8 +185,6 @@ class ElasticSearch(val index : String) {
                 )
             )
         )
-
-        log(Level.DEBUG, pretty(render(json)))
 
         val response = callES(path = index, method = "POST", toES = Some(pretty(render(json))))
         if(response._1 == 200) {
@@ -225,6 +234,8 @@ class ElasticSearch(val index : String) {
         }
         
         log(Level.DEBUG, "Response code is " + conn.getResponseCode)
+        
+        log(Level.DEBUG, "Response is " + buffer.toString)
         
         (conn.getResponseCode, buffer.toString)
     }
