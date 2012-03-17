@@ -84,6 +84,8 @@ class Scoreboard(val userId:String) {
         var size = 0
         for (hit <- timeline) size += 1
 
+        log(Level.DEBUG, "Size is " + size)
+
         // log(Level.DEBUG, "lrange " + getUserKey("timeline") + " " + start + " " + end)
         // Fetch the values for our keys
         // val timeline = jedis.lrange(getUserKey("timeline"), start, end)

@@ -27,10 +27,10 @@ class TylerServletSpec extends MutableScalatraSpec {
                 status mustEqual 200
             }
 
-            // get("/user/1/timeline") {
-            //     body mustEqual "[{\"name\":\"completed-test\"}]"
-            //     status mustEqual 200
-            // }
+            get("/user/1/timeline") {
+                body mustEqual "[{\"name\":\"completed-test\"}]"
+                status mustEqual 200
+            }
             // 
             // get("/user/1/actions", Tuple("search", "completed-test")) {
             //     body mustEqual "{\"completed-test\":\"1\"}"

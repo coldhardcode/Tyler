@@ -3,7 +3,7 @@ package practice.daily.tyler
 import com.twitter.logging.{Level,Logger}
 import com.twitter.logging.config._
 
-import java.io.{BufferedReader,FileNotFoundException,InputStreamReader,OutputStreamWriter}
+import java.io.{BufferedReader,FileNotFoundException,InputStreamReader,IOException,OutputStreamWriter}
 import java.lang.StringBuilder
 import java.net.{URL,HttpURLConnection}
 import java.util.UUID
@@ -93,34 +93,52 @@ class ElasticSearch(val index : String) {
     }
   
     def getTimeline(id : String) : String = {
+
+        val json = (
+            "query" -> (
+                ("match_all" -> Map.empty[String,String])
+            )
+        ) ~
+        ("filter" -> (
+            "term" -> (
+                "user_id" -> id
+            )
+        ))
+        log(Level.DEBUG, pretty(render(json)))
         
-        val url  = new URL(host + "/" + index + "/actions/_search")
-        val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-        conn.setRequestMethod("GET")
-        conn.setDoOutput(true)
-        conn.setDoInput(true)
-        val writer = new OutputStreamWriter(conn.getOutputStream)
-        writer.write("{" +
-            "\"query\": {" +
-                " \"match_all\": {}" +
-            "}," +
-            "\"filter\" : {" +
-                " \"term\" : { \"user_id\" : \"" + id + "\" }" +
-            "}" +
-        "}")
-        writer.flush
-        
-        val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
-        var line = reader.readLine
-        val buffer = new StringBuilder()
-        while((line != null)) {
-            buffer.append(line)
-            line = reader.readLine
-        }
-        writer.close
-        reader.close
-        
-        buffer.toString
+        val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
+        log(Level.DEBUG, response._2)
+        response._2
+      
+        // 
+        // 
+        // val url  = new URL(host + "/" + index + "/actions/_search")
+        // val conn = url.openConnection.asInstanceOf[HttpURLConnection]
+        // conn.setRequestMethod("GET")
+        // conn.setDoOutput(true)
+        // conn.setDoInput(true)
+        // val writer = new OutputStreamWriter(conn.getOutputStream)
+        // writer.write("{" +
+        //     "\"query\": {" +
+        //         " \"match_all\": {}" +
+        //     "}," +
+        //     "\"filter\" : {" +
+        //         " \"term\" : { \"user_id\" : \"" + id + "\" }" +
+        //     "}" +
+        // "}")
+        // writer.flush
+        // 
+        // val reader = new BufferedReader(new InputStreamReader(conn.getInputStream))
+        // var line = reader.readLine
+        // val buffer = new StringBuilder()
+        // while((line != null)) {
+        //     buffer.append(line)
+        //     line = reader.readLine
+        // }
+        // writer.close
+        // reader.close
+        // 
+        // buffer.toString
     }
     
     def delete(id : String) {
@@ -220,6 +238,7 @@ class ElasticSearch(val index : String) {
             conn.getInputStream
         } catch {
             case x : FileNotFoundException => conn.getErrorStream
+            case x : IOException => conn.getErrorStream
         }
         val buffer = new StringBuilder("")
 
@@ -232,6 +251,8 @@ class ElasticSearch(val index : String) {
             }
             reader.close
         }
+        
+        log(Level.DEBUG, "Response code is " + conn.getResponseCode)
         
         (conn.getResponseCode, buffer.toString)
     }
