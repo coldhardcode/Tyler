@@ -10,15 +10,11 @@ achievements the user has earned.
 
 Tyler is REST. Yeaaaaah.
 
-## Details On Actions
-
-Action name should stick to a-zA-Z0-9\-_
-
 ### Create An Action
 
 New actions will be vivified if they do not exist, incremented if they do.
 
-    curl -v -XPOST 'http://127.0.0.1:8080/user/1/action' -d '{"name":"action-name"}' -H "Content-Type: application/json"
+    curl -v -XPOST 'http://127.0.0.1:8080/user/1/action' -d '{"action":"action-name"}' -H "Content-Type: application/json"
 
 The data posted **must** have a name key.  This should follow the aforementioned action name restrictions.
 
@@ -55,24 +51,51 @@ New actions will be vivified if they do not exist, incremented if they do.
 
     curl -v -XDELETE 'http://127.0.0.1:8080/user/1' -H "Content-Type: application/json"
 
-## Internal Stats
+# Data Structures
 
-* stats/add/action: Count of action adds
+## Progress On A Goal
 
-* stats/add/timeline: Count of timeline adds
+    {
+        action    : 'goal-progress',
+        timestamp : '2012-03-14 14:21:17',
+        person_id : 1,      // ID of the user
+        public    : {       // Subset of data that will be publicly visible
+            action    : 'goal-progress',
+            timestamp : '2012-03-14 14:21:17',
+            person_id : 1,        // ID of the user
+            goal_id   : 123,      // The ID for the goal,
+            id        : 1726,     // The ID for the object in question
+            quantity  : 1,        // How many?
+        }
+        goal_id   : 123,      // The ID for the goal,
+        id        : 1726,     // The ID for the object in question
+        quantity  : 1,        // How many?
+        remaining : 0,        // Any remaining work (only relevant for progress?)
+        text      : 'did it', // Any text note attached.
+        params    : [ ], // Params for i18n? Just future proofing.
+    }
 
-* stats/get/action: Count of action gets
+## Adding A New Goal
 
-* stats/get/timeline: Count of timeline gets
-
-* stats/purge/user: Count of user purges
-
-## Key Names
-
-User Action counters: `user/:userid/action-count/:actionname`
-Timeline: `user/:userid/timeline`
-
-User Timeline: user/:userid/timeline
+    {
+        action    : 'goal-added',
+        timestamp : '2012-03-14 14:21:17',
+        person_id : 1,      // ID of the user
+        public    : {       // Subset of data that will be publicly visible
+            action      : 'goal-added',
+            timestamp   : '2012-03-14 14:21:17',
+            person_id   : 1,        // ID of the user
+            goal_id     : 124,      // The ID for the goal,
+            id          : 124,      // The ID for the object in question (a goal)
+            quantity    : 1,        // How many?
+        }
+        goal_id   : 124,      // The ID for the goal,
+        id        : 124,      // The ID for the object in question (a goal)
+        quantity  : 1,        // How many?
+        remaining : 1,        // Won't really be used
+        text      : 'Name of the goal', // Kinda lame?
+        params    : [ ], // Params for i18n? Just future proofing.
+    }
 
 # Running
 
