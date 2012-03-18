@@ -166,7 +166,7 @@ class ElasticSearch(val index : String) {
     def createIndex() : Boolean = {
 
         val action = Map("type" -> "string", "index" -> "not_analyzed")
-        val timestamp = Map("type" -> "date", "format" -> "basic_date_time_no_millis") // yyyyMMdd'T'HHmmssZ
+        val timestamp = Map("type" -> "date", "format" -> "date_hour_minute_second") // yyyyMMdd'T'HHmmssZ
 
         val json = (
             "mappings" -> (

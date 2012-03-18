@@ -9,22 +9,23 @@ import java.nio.charset.Charset
 
 object JSONLoader {
 
-    def loadFromDirectory(board : Scoreboard, path : String) {
+    def loadFromDirectory(scoreboard : Scoreboard, path : String) {
 
         val dir = new File(path)
         val files = dir.listFiles.filter {
             file => file.toString endsWith(".json")
         } foreach {
-            file => postFile(board, file)
+            file => postFile(scoreboard = scoreboard, file = file)
         }
     }
     
-    def postFile(board : Scoreboard, file : File) {
+    def postFile(scoreboard : Scoreboard, file : File) {
         
         val stream = new FileInputStream(file)
         val channel = stream.getChannel
         val bb = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size)
         val contents = Charset.forName("UTF-8").decode(bb).toString
-        println(contents)
+        println("Indexing...")
+        scoreboard.addAction(contents)
     }
 }
