@@ -65,7 +65,7 @@ class ElasticSearch(val index : String) {
         response._2
     }
 
-    def getActionCounts(id : String, name : String) : Option[Map[String,BigInt]] = {
+    def getActionCounts(id : Int, name : String) : Option[Map[String,BigInt]] = {
         
         val json = (
             "query" -> (
@@ -111,7 +111,7 @@ class ElasticSearch(val index : String) {
         Option((terms zip counts) toMap)
     }
   
-    def getTimeline(id : String) : List[Map[String,Any]] = {
+    def getTimeline(id : Int) : List[Map[String,Any]] = {
 
         val json = (
             "query" -> (
@@ -134,7 +134,7 @@ class ElasticSearch(val index : String) {
         tl.values.asInstanceOf[List[Map[String,Any]]]
     }
     
-    def delete(id : String) {
+    def delete(id : Int) {
         
 
         val response = callES(path = "/" + index + "/actions/_query?q=user_id:" + id, method = "DELETE")

@@ -6,15 +6,10 @@ import scala.collection.JavaConversions._
 import scala.collection.immutable._
 import scala.collection.mutable.Buffer
 
-class Scoreboard(val userId:String) {
+class Scoreboard() {
 
     private val log = Logger.get(getClass)
     implicit val formats = DefaultFormats // Brings in default date formats etc.
-
-    def getUserKey(key: String): String = {
-
-        return "user/" + userId + "/" + key
-    }
 
     def addAction(action:String) : Boolean = {
 
@@ -30,7 +25,7 @@ class Scoreboard(val userId:String) {
         return true
     }
 
-    def getActionCount(actionName:String) : Option[Map[String,BigInt]] = {
+    def getActionCount(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {
         
          val es = new ElasticSearch("tdp")
          val actions = es.getActionCounts(userId, actionName)
@@ -47,7 +42,7 @@ class Scoreboard(val userId:String) {
     /**
     * Get a user's timeline
     */
-    def getTimeline(page : Int = 1, count : Int = 10) : Option[List[Map[String,Any]]] = {
+    def getTimeline(userId : Int, page : Int = 1, count : Int = 10) : Option[List[Map[String,Any]]] = {
 
         val start = (page - 1) * count
         val end = (page * count) - 1
@@ -62,7 +57,7 @@ class Scoreboard(val userId:String) {
         return Option(timeline)
     }
     
-    def purge() : Boolean = {
+    def purge(userId : Int) : Boolean = {
 
         try {
 

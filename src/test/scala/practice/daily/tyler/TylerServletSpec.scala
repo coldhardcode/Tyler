@@ -23,14 +23,14 @@ class TylerServletSpec extends MutableScalatraSpec {
         }
 
         "have a sane lifecycle" in {
-            post("/user/1/action", """{"action":"completed-test","user_id":"1"}""") {
+            post("/user/1/action", """{"action":"completed-test","user_id":1}""") {
                 status mustEqual 200
             }
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
             get("/user/1/timeline") {
-                body mustEqual """[{"action":"completed-test","user_id":"1"}]"""
+                body mustEqual """[{"action":"completed-test","user_id":1}]"""
                 status mustEqual 200
             }
             
@@ -40,14 +40,14 @@ class TylerServletSpec extends MutableScalatraSpec {
             }
 
             // Post a second action
-            post("/user/1/action", "{\"action\":\"completed-test\",\"user_id\":\"1\"}") {
+            post("/user/1/action", "{\"action\":\"completed-test\",\"user_id\":1}") {
                 status mustEqual 200
             }
             
             Thread.sleep(1000) // ES needs a bit of time to commit
             
             get("/user/1/timeline") {
-                body mustEqual "[{\"action\":\"completed-test\",\"user_id\":\"1\"},{\"action\":\"completed-test\",\"user_id\":\"1\"}]"
+                body mustEqual "[{\"action\":\"completed-test\",\"user_id\":1},{\"action\":\"completed-test\",\"user_id\":1}]"
                 status mustEqual 200
             }
             
@@ -58,7 +58,7 @@ class TylerServletSpec extends MutableScalatraSpec {
             }
             
             // Now add a second action
-            post("/user/1/action", "{\"action\":\"completed-test2\",\"user_id\":\"1\"}") {
+            post("/user/1/action", "{\"action\":\"completed-test2\",\"user_id\":1}") {
                 status mustEqual 200
             }
             

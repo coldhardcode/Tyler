@@ -34,17 +34,12 @@ class TylerServlet extends ScalatraServlet {
         </html>
     }
 
-    def getUserKey(userId: String, key: String): String = {
-
-        return "user/" + userId + "/" + key
-    }
-
     /**
     * Create an action XXX Should this be a PUT?
     */
     post("/user/:id/action") {
 
-        val board = new Scoreboard(userId = params("id"))
+        val board = new Scoreboard()
         val success = board.addAction(action = request.body)
 
         if(!success) {
@@ -57,8 +52,11 @@ class TylerServlet extends ScalatraServlet {
     */
     get("/user/:id/actions") {
 
-        val board = new Scoreboard(userId = params("id"))
-        val actions = board.getActionCount(actionName = params.getOrElse("search", "*"))
+        val board = new Scoreboard()
+        val actions = board.getActionCount(
+            userId = params("id").toInt,
+            actionName = params.getOrElse("search", "*")
+        )
 
         actions match {
             case Some(list) => {
@@ -77,8 +75,12 @@ class TylerServlet extends ScalatraServlet {
     */
     get("/user/:id/timeline") {
 
-        val board = new Scoreboard(userId = params("id"))
-        val timeline = board.getTimeline(page = params.getOrElse("page", "1").toInt, count = params.getOrElse("count", "10").toInt)
+        val board = new Scoreboard()
+        val timeline = board.getTimeline(
+            userId = params("id").toInt,
+            page = params.getOrElse("page", "1").toInt,
+            count = params.getOrElse("count", "10").toInt
+        )
     
         // Return a 404 since we have nothing to return
         timeline match {
@@ -100,8 +102,8 @@ class TylerServlet extends ScalatraServlet {
     */
     delete("/user/:id") {
 
-        val board = new Scoreboard(userId = params("id"))
-        val success = board.purge
+        val board = new Scoreboard
+        val success = board.purge(userId = params("id").toInt)
 
         if(!success) {
             log(Level.WARNING, "Attempt to delete non-existent user: " + params("id"))
