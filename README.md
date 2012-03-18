@@ -1,5 +1,3 @@
-https://gist.github.com/e16d4369594ae9995178
-
 # Tyler
 
 Tyler is a web service that tracks the actions of a user.  It keeps counts
