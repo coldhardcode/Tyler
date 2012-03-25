@@ -77,7 +77,7 @@ class ElasticSearch(val index : String) {
         (
             "filter" -> (
                 "term" -> (
-                    "user_id" -> id
+                    "person.id" -> id
                 )
             )
         ) ~
@@ -91,7 +91,7 @@ class ElasticSearch(val index : String) {
                 (
                     "facet_filter" -> (
                         "term" -> (
-                            "user_id" -> id
+                            "person.id" -> id
                         )
                     )
                 )
@@ -120,7 +120,7 @@ class ElasticSearch(val index : String) {
         ) ~
         ("filter" -> (
             "term" -> (
-                "user_id" -> id
+                "person.id" -> id
             )
         ))
         log(Level.DEBUG, pretty(render(json)))
