@@ -31,9 +31,20 @@
         "field": "timestamp"
       },
       "facet_filter": {
-        "term": {
-          "person.id": 2
-        }
+        "and": [
+          {
+            "term": {
+              "person.id": 2
+            }
+          },
+          {
+            "range": {
+              "timestamp": {
+                "gte": "2012-03-21T19:01:01"
+              }
+            }
+          }
+        ]
       }
     }
   }
