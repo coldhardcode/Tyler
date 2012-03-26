@@ -18,7 +18,7 @@ class FixtureDataSpec extends MutableScalatraSpec {
         }
 
         "handle fixture data" in {
-            JSONLoader.loadFromDirectory(scoreboard = new Scoreboard, path = "/Users/gphat/Desktop/tyler")
+            // JSONLoader.loadFromDirectory(scoreboard = new Scoreboard, path = "/Users/gphat/Desktop/tyler")
             
             1 must be equalTo(1)
         }
