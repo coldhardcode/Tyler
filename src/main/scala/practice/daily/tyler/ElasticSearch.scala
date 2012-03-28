@@ -200,8 +200,7 @@ class ElasticSearch(val index : String) {
     
     def delete(id : Int) {
         
-
-        val response = callES(path = "/" + index + "/actions/_query?q=user_id:" + id, method = "DELETE")
+        val response = callES(path = "/" + index + "/actions/_query?q=person.id:" + id, method = "DELETE")
         response._2
     }
 
