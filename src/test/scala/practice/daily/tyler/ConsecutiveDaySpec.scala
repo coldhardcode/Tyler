@@ -1,21 +1,18 @@
 package practice.daily.tyler
 
-import practice.daily.tyler.utility.JSONLoader
 import net.liftweb.json._
-import org.scalatra.test.specs2._
 
 import java.text.SimpleDateFormat
 import java.util.{Calendar,Date}
 import net.liftweb.json.JsonDSL._
+import org.specs2.mutable._
 
 // For more on Specs2, see http://etorreborre.github.com/specs2/guide/org.specs2.guide.QuickStart.html 
-class ConsecutiveDaySpec extends MutableScalatraSpec {
+class ConsecutiveDaySpec extends Specification {
 
     implicit val formats = DefaultFormats // Brings in default date formats etc.
 
-    addServlet(classOf[TylerServlet], "/*")
-
-    "Servlet" should {
+    "Scoreboard" should {
 
         "work with query" in {
 
@@ -23,69 +20,67 @@ class ConsecutiveDaySpec extends MutableScalatraSpec {
             val rightNow = Calendar.getInstance();
             val nowDate = rightNow.getTime();
             
-            post("/user/2/action", compact(render(
+            val board = new Scoreboard()
+            board.addAction(compact(render(
                 ("action" -> "goal-progress") ~
                 ("timestamp" -> dateFormatter.format(nowDate)) ~
                 ("person" -> (
                     "id" -> 2
                 ))
-            ))) {
-                status mustEqual 200
-            }
+            )))
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            get("/user/2/actions", Tuple("search", "goal-progress")) {
-                 body mustEqual """{"goal-progress":1}"""
-                 status mustEqual 200
-            }
+            board.getActionCounts(2, "goal-progress") must beSome
+            // get("/user/2/actions", Tuple("search", "goal-progress")) {
+            //      body mustEqual """{"goal-progress":1}"""
+            //      status mustEqual 200
+            // }
 
             // Now add a few more
             (1 until 3) foreach { (x) => {
                 val theCal = Calendar.getInstance;
                 theCal.add(Calendar.DATE, -x)
-                post("/user/2/action", compact(render(
+                board.addAction(compact(render(
                     ("action" -> "goal-progress") ~
                     ("timestamp" -> dateFormatter.format(theCal.getTime)) ~
                     ("person" -> (
                         "id" -> 2
                     ))
-                ))) {
-                    status mustEqual 200
-                }
+                )))
             } }
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            get("/user/2/actions", Tuple("search", "goal-progress")) {
-                 body mustEqual """{"goal-progress":3}"""
-                 status mustEqual 200
-            }
+            // get("/user/2/actions", Tuple("search", "goal-progress")) {
+            //      body mustEqual """{"goal-progress":3}"""
+            //      status mustEqual 200
+            // }
+            board.getActionCounts(2, "goal-prgress") must beSome
 
              // And the rest
 
              (3 until 7) foreach { (x) => {
                  val theCal = Calendar.getInstance;
                  theCal.add(Calendar.DATE, -x)
-                 post("/user/2/action", compact(render(
+                 board.addAction(compact(render(
                      ("action" -> "goal-progress") ~
                      ("timestamp" -> dateFormatter.format(theCal.getTime)) ~
                      ("person" -> (
                          "id" -> 2
                      ))
-                 ))) {
-                     status mustEqual 200
-                 }
+                 )))
              } }
 
              Thread.sleep(1000) // ES needs a bit of time to commit
 
-             get("/user/2/actions", Tuple("search", "goal-progress")) {
-                  body mustEqual """{"goal-progress":7}"""
-                  status mustEqual 200
-             }
+             // get("/user/2/actions", Tuple("search", "goal-progress")) {
+             //      body mustEqual """{"goal-progress":7}"""
+             //      status mustEqual 200
+             // }
+             board.getActionCounts(2, "goal-progress") must beSome
 
-             1 mustEqual 1
+             // 1 mustEqual 1
         }
     }
 }

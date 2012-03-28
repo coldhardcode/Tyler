@@ -53,7 +53,7 @@ class TylerServlet extends ScalatraServlet {
     get("/user/:id/actions") {
 
         val board = new Scoreboard()
-        val actions = board.getActionCount(
+        val actions = board.getActionCounts(
             userId = params("id").toInt,
             actionName = params.getOrElse("search", "*")
         )

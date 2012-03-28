@@ -65,6 +65,70 @@ class ElasticSearch(val index : String) {
         response._2
     }
 
+    def getActionCountsByDate(id : Int, name : String) : Option[Map[String,BigInt]] = {
+        
+        val json = Map(
+            "query" -> Map(
+                "wildcard" -> Map(
+                    "action" -> name
+                )
+            ),
+            "filter" -> Map(
+                "and" -> List(
+                    Map(
+                        "term" -> Map(
+                            "person.id" -> id
+                        )
+                    ),
+                    Map(
+                        "range" -> Map(
+                            "timestamp" -> Map(
+                                "gte" -> "2012-03-21T19:01:01"
+                            )
+                        )
+                    )
+                )
+            ),
+            "facets" -> Map(
+                "actions" -> Map(
+                    "date_histogram" -> Map(
+                        "field"     -> "timestamp",
+                        "interval"  -> "day"
+                    ),
+                    "facet_filter" -> Map(
+                        "and" -> List(
+                            Map(
+                                "term" -> Map(
+                                    "person.id" -> id
+                                )
+                            ),
+                            Map(
+                                "range" -> Map(
+                                    "timestamp" -> Map(
+                                        "gte" -> "2012-03-21T19:01:01"
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        
+        log(Level.DEBUG, pretty(render(decompose(json))))
+        
+        val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(decompose(json)))))
+
+        val resJson = parse(response._2)
+
+        val actions = resJson \ "facets" \ "actions" \ "entries"
+        
+        val times = for { JField("time", JString(term)) <- resJson } yield term
+        val counts = for { JField("count", JInt(count)) <- resJson } yield count
+
+        Option((times zip counts) toMap)
+    }
+
     def getActionCounts(id : Int, name : String) : Option[Map[String,BigInt]] = {
         
         val json = (

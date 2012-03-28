@@ -25,7 +25,21 @@ class Scoreboard() {
         return true
     }
 
-    def getActionCount(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {
+    def getActionCountsByDate(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {
+        
+         val es = new ElasticSearch("tdp")
+         val actions = es.getActionCountsByDate(userId, actionName)
+
+         // Return a 404 since we have nothing to return
+         if(actions.size < 1) {
+             // Throw something here? How do we exit?
+             return None
+         }
+
+         return actions
+    }
+
+    def getActionCounts(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {
         
          val es = new ElasticSearch("tdp")
          val actions = es.getActionCounts(userId, actionName)
