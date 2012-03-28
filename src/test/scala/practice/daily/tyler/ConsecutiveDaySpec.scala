@@ -1,13 +1,11 @@
 package practice.daily.tyler
 
-import net.liftweb.json._
-
 import java.text.SimpleDateFormat
 import java.util.{Calendar,Date}
+import net.liftweb.json._
 import net.liftweb.json.Extraction._
 import org.specs2.mutable._
 
-// For more on Specs2, see http://etorreborre.github.com/specs2/guide/org.specs2.guide.QuickStart.html 
 class ConsecutiveDaySpec extends Specification {
 
     implicit val formats = DefaultFormats // Brings in default date formats etc.
@@ -54,10 +52,6 @@ class ConsecutiveDaySpec extends Specification {
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            // get("/user/2/actions", Tuple("search", "goal-progress")) {
-            //      body mustEqual """{"goal-progress":3}"""
-            //      status mustEqual 200
-            // }
             val twoCount = board.getActionCounts(2, "goal-progress")
             twoCount must beSome
             twoCount.get must havePair("goal-progress" -> 3)
@@ -80,10 +74,6 @@ class ConsecutiveDaySpec extends Specification {
 
              Thread.sleep(1000) // ES needs a bit of time to commit
 
-             // get("/user/2/actions", Tuple("search", "goal-progress")) {
-             //      body mustEqual """{"goal-progress":7}"""
-             //      status mustEqual 200
-             // }
              val threeCount = board.getActionCounts(2, "goal-progress")
              threeCount must beSome
              threeCount.get must havePair("goal-progress" -> 7)
