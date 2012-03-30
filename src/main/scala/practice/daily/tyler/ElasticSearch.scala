@@ -6,11 +6,13 @@ import com.twitter.logging.config._
 import java.io.{BufferedReader,FileNotFoundException,InputStreamReader,IOException,OutputStreamWriter}
 import java.lang.StringBuilder
 import java.net.{URL,HttpURLConnection}
-import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.{Date,UUID,TimeZone}
 import net.liftweb.json._
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.{read,write}
+import scala.collection.JavaConversions._
 
 // case class Hit(
 //     _index : Option[String],
@@ -65,7 +67,10 @@ class ElasticSearch(val index : String) {
         response._2
     }
 
-    def getActionCountsByDate(id : Int, name : String) : Option[Map[String,BigInt]] = {
+    def getActionCountsByDate(id : Int, name : String) : scala.collection.mutable.Map[String,BigInt] = {
+
+        val dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"))
         
         val json = Map(
             "query" -> Map(
@@ -123,10 +128,16 @@ class ElasticSearch(val index : String) {
 
         val actions = resJson \ "facets" \ "actions" \ "entries"
         
-        val times = for { JField("time", JString(term)) <- resJson } yield term
-        val counts = for { JField("count", JInt(count)) <- resJson } yield count
+        val results = scala.collection.mutable.Map.empty[String,BigInt]
 
-        Option((times zip counts) toMap)
+        actions.values.asInstanceOf[List[Map[String,BigInt]]] foreach {
+            entry => {
+                val totalDate = new Date(entry.get("time").get.toLong)
+                results += dateFormatter.format(totalDate.getTime) -> entry.get("count").get
+            }
+        }
+
+        results
     }
 
     def getActionCounts(id : Int, name : String) : Option[Map[String,BigInt]] = {

@@ -25,7 +25,7 @@ class Scoreboard() {
         return true
     }
 
-    def getActionCountsByDate(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {
+    def getActionCountsByDate(userId : Int, actionName : String) : Option[scala.collection.mutable.Map[String,BigInt]] = {
         
          val es = new ElasticSearch("tdp")
          val actions = es.getActionCountsByDate(userId, actionName)
@@ -36,7 +36,7 @@ class Scoreboard() {
              return None
          }
 
-         return actions
+         return Option(actions)
     }
 
     def getActionCounts(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {

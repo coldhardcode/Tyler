@@ -1,7 +1,7 @@
 package practice.daily.tyler
 
 import java.text.SimpleDateFormat
-import java.util.{Calendar,Date}
+import java.util.{Calendar,Date,TimeZone}
 import net.liftweb.json._
 import net.liftweb.json.Extraction._
 import org.specs2.mutable._
@@ -15,6 +15,7 @@ class ConsecutiveDaySpec extends Specification {
         "work with query" in {
 
             val dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"))
             val rightNow = Calendar.getInstance();
             val nowDate = rightNow.getTime();
             
@@ -52,13 +53,13 @@ class ConsecutiveDaySpec extends Specification {
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            val twoCount = board.getActionCounts(2, "goal-progress")
+            val twoCount = board.getActionCountsByDate(2, "goal-progress")
             twoCount must beSome
-            twoCount.get must havePair("goal-progress" -> 3)
+            twoCount.get.keys.size mustEqual 3
 
              // And the rest
 
-             (3 until 7) foreach { (x) => {
+             (4 until 7) foreach { (x) => {
                  val theCal = Calendar.getInstance;
                  theCal.add(Calendar.DATE, -x)
                  board.addAction(compact(render(decompose(
@@ -74,13 +75,11 @@ class ConsecutiveDaySpec extends Specification {
 
              Thread.sleep(1000) // ES needs a bit of time to commit
 
-             val threeCount = board.getActionCounts(2, "goal-progress")
+             val threeCount = board.getActionCountsByDate(2, "goal-progress")
              threeCount must beSome
-             threeCount.get must havePair("goal-progress" -> 7)
+             threeCount.get.keys.size mustEqual 6
 
-             board.purge(2)
-
-             1 mustEqual 1
+             board.purge(2) mustEqual(true)
         }
     }
 }
