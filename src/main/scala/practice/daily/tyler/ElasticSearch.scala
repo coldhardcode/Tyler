@@ -187,7 +187,6 @@ class ElasticSearch(val index : String) {
         
         val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(json))))
 
-        println("######_____ " + response._2)
         val resJson = parse(response._2)
         
         val tl = for { JField("_source", x) <- resJson } yield x

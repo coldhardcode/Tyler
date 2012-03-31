@@ -27,7 +27,6 @@ class Scoreboard() {
         
         // Now run through rewards!
         val progCount = getActionCountsByDate(personId.values.asInstanceOf[BigInt].intValue, "goal-progress", 7)
-        //println(progCount)
 
         progCount match {
             case Some(x : Any) => {
