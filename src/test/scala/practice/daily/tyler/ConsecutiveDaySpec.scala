@@ -10,9 +10,9 @@ class ConsecutiveDaySpec extends Specification {
 
     implicit val formats = DefaultFormats // Brings in default date formats etc.
 
-    "Scoreboard" should {
+    "Consecutive Days" should {
 
-        "work with query" in {
+        "be triggered with enough actions" in {
 
             val dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"))
@@ -53,7 +53,7 @@ class ConsecutiveDaySpec extends Specification {
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            val twoCount = board.getActionCountsByDate(2, "goal-progress")
+            val twoCount = board.getActionCountsByDate(2, "goal-progress", 7)
             twoCount must beSome
             twoCount.get.keys.size mustEqual 3
 
@@ -75,9 +75,27 @@ class ConsecutiveDaySpec extends Specification {
 
              Thread.sleep(1000) // ES needs a bit of time to commit
 
-             val threeCount = board.getActionCountsByDate(2, "goal-progress")
+             val threeCount = board.getActionCountsByDate(2, "goal-progress", 7)
              threeCount must beSome
              threeCount.get.keys.size mustEqual 6
+
+             (7 until 9) foreach { (x) => {
+                 val theCal = Calendar.getInstance;
+                 theCal.add(Calendar.DATE, -x)
+                 board.addAction(compact(render(decompose(
+                     Map(
+                         "action" -> "goal-progress",
+                         "timestamp" -> dateFormatter.format(theCal.getTime),
+                         "person" -> Map(
+                             "id" -> 2
+                         )
+                     )
+                 ))))
+             } }
+
+             val fourCount = board.getActionCountsByDate(2, "goal-progress", 3)
+             fourCount must beSome
+             fourCount.get.keys.size mustEqual 3
 
              board.purge(2) mustEqual(true)
         }

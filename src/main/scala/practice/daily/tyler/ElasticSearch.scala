@@ -67,10 +67,12 @@ class ElasticSearch(val index : String) {
         response._2
     }
 
-    def getActionCountsByDate(id : Int, name : String) : scala.collection.mutable.Map[String,BigInt] = {
+    def getActionCountsByDate(id : Int, name : String, days : Int) : scala.collection.mutable.Map[String,BigInt] = {
 
         val dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"))
+        
+        val startDate = "now-" + days.toString + "d"
         
         val json = Map(
             "query" -> Map(
@@ -88,7 +90,7 @@ class ElasticSearch(val index : String) {
                     Map(
                         "range" -> Map(
                             "timestamp" -> Map(
-                                "gte" -> "2012-03-21T19:01:01"
+                                "gte" -> startDate
                             )
                         )
                     )
@@ -110,7 +112,7 @@ class ElasticSearch(val index : String) {
                             Map(
                                 "range" -> Map(
                                     "timestamp" -> Map(
-                                        "gte" -> "2012-03-21T19:01:01"
+                                        "gte" -> startDate
                                     )
                                 )
                             )
@@ -267,7 +269,7 @@ class ElasticSearch(val index : String) {
         false
     }
     
-    private def callES(path : String, method : String = "GET", toES : Option[String] = None) : (Int, String) = {
+    def callES(path : String, method : String = "GET", toES : Option[String] = None) : (Int, String) = {
         
         val url  = new URL(host + "/" + path)
         log(Level.DEBUG, method + " request to " + url.toString)

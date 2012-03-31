@@ -22,13 +22,41 @@ class Scoreboard() {
             case ex => log.error(ex, "Error adding action", ex.getMessage)
             return false
         }
+        
+        val personId = parse(action) \ "person" \ "id"
+        
+        // Now run through rewards!
+        val progCount = getActionCountsByDate(personId.values.asInstanceOf[BigInt].intValue, "goal-progress", 7)
+        println(progCount)
+
+        progCount match {
+            case Some(x : Any) => {
+                log(Level.DEBUG, "XXXX ================>")
+                if(x.size == 7) {
+                    log(Level.INFO, "Awarding some shit!")
+                    // XXX Need to check here.
+                    // XXX Should this be public? Different index? Different type?
+                    // addAction(compact(render(decompose(
+                    //     Map(
+                    //          "action" -> "award-received",
+                    //          "timestamp" -> dateFormatter.format(Calendar.getInstance.getTime),
+                    //          "person" -> Map(
+                    //              "id" -> personId
+                    //          )
+                    //      )
+                    //  ))))
+                }
+            }
+            case None => // do nothing
+        }
+        
         return true
     }
 
-    def getActionCountsByDate(userId : Int, actionName : String) : Option[scala.collection.mutable.Map[String,BigInt]] = {
+    def getActionCountsByDate(userId : Int, actionName : String, days : Int) : Option[scala.collection.mutable.Map[String,BigInt]] = {
         
          val es = new ElasticSearch("tdp")
-         val actions = es.getActionCountsByDate(userId, actionName)
+         val actions = es.getActionCountsByDate(userId, actionName, days)
 
          // Return a 404 since we have nothing to return
          if(actions.size < 1) {
