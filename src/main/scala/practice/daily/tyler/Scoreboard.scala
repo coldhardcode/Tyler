@@ -27,11 +27,10 @@ class Scoreboard() {
         
         // Now run through rewards!
         val progCount = getActionCountsByDate(personId.values.asInstanceOf[BigInt].intValue, "goal-progress", 7)
-        println(progCount)
+        //println(progCount)
 
         progCount match {
             case Some(x : Any) => {
-                log(Level.DEBUG, "XXXX ================>")
                 if(x.size == 7) {
                     log(Level.INFO, "Awarding some shit!")
                     // XXX Need to check here.

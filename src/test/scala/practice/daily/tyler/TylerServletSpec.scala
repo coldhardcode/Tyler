@@ -38,7 +38,7 @@ class TylerServletSpec extends MutableScalatraSpec {
                 body mustEqual "{\"completed-test\":1}"
                 status mustEqual 200
             }
-
+            
             // Post a second action
             post("/user/1/action", """{"action":"completed-test","person":{"id":1}}""") {
                 status mustEqual 200

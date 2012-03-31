@@ -3,37 +3,15 @@ package practice.daily.tyler
 import com.twitter.logging.{Level,Logger}
 import com.twitter.logging.config._
 
-import java.io.{BufferedReader,FileNotFoundException,InputStreamReader,IOException,OutputStreamWriter}
-import java.lang.StringBuilder
 import java.net.{URL,HttpURLConnection}
 import java.text.SimpleDateFormat
 import java.util.{Date,UUID,TimeZone}
+import com.sun.jersey.api.client.{Client,ClientResponse}
 import net.liftweb.json._
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Serialization.{read,write}
 import scala.collection.JavaConversions._
-
-// case class Hit(
-//     _index : Option[String],
-//     _type : Option[String],
-//     _id : Option[String],
-//     _score : Option[Float],
-//     _source : Option[Map[String,Any]]
-// )
-// 
-// case class Hits(
-//     total : Int,
-//     max_score : Option[Float],
-//     hits : Option[List[Hit]]
-// )
-// 
-// case class Result(
-//     took : Int,
-//     timed_out : Boolean,
-//     shards : Option[Map[String,String]],
-//     hits : Hits
-// )
 
 class ElasticSearch(val index : String) {
 
@@ -58,7 +36,7 @@ class ElasticSearch(val index : String) {
         }
 
         val uuid = UUID.randomUUID.toString
-        callES(path = "/" + index + "/actions/" + uuid, method = "PUT", toES = Some(action))
+        callES(path = "/" + index + "/actions/" + uuid, method = "PUT", content = Some(action))
     }
     
     def getone(id : String) {
@@ -124,7 +102,7 @@ class ElasticSearch(val index : String) {
         
         log(Level.DEBUG, pretty(render(decompose(json))))
         
-        val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(decompose(json)))))
+        val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
 
@@ -132,11 +110,16 @@ class ElasticSearch(val index : String) {
         
         val results = scala.collection.mutable.Map.empty[String,BigInt]
 
-        actions.values.asInstanceOf[List[Map[String,BigInt]]] foreach {
-            entry => {
-                val totalDate = new Date(entry.get("time").get.toLong)
-                results += dateFormatter.format(totalDate.getTime) -> entry.get("count").get
+        val foo = actions.values
+        foo match {
+            case x : List[Map[String,BigInt]] => x foreach {
+                entry => {
+                    val totalDate = new Date(entry.get("time").get.toLong)
+                    results += dateFormatter.format(totalDate.getTime) -> entry.get("count").get
+                }
             }
+            case Some(x : Any) => // Wtf?
+            // case None => // Nothing
         }
 
         results
@@ -176,7 +159,7 @@ class ElasticSearch(val index : String) {
         )
         log(Level.DEBUG, pretty(render(json)))
         
-        val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(json))))
 
         val resJson = parse(response._2)
 
@@ -202,8 +185,9 @@ class ElasticSearch(val index : String) {
         ))
         log(Level.DEBUG, pretty(render(json)))
         
-        val response = callES(path = "/" + index + "/actions/_search", method = "POST", toES = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(json))))
 
+        println("######_____ " + response._2)
         val resJson = parse(response._2)
         
         val tl = for { JField("_source", x) <- resJson } yield x
@@ -262,57 +246,52 @@ class ElasticSearch(val index : String) {
             )
         )
 
-        val response = callES(path = index, method = "POST", toES = Some(pretty(render(json))))
+        val response = callES(path = index, method = "POST", content = Some(pretty(render(json))))
         if(response._1 == 200) {
             return true
         }
         false
     }
     
-    def callES(path : String, method : String = "GET", toES : Option[String] = None) : (Int, String) = {
+    def callES(path : String, method : String = "GET", content : Option[String] = None) : (Int, String) = {
         
-        val url  = new URL(host + "/" + path)
-        log(Level.DEBUG, method + " request to " + url.toString)
-        val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-        conn.setRequestMethod(method)
-        // Of course we want input
-        conn.setDoInput(true)
+        
+        val client = new Client
+        val r = client.resource(host + "/" + path);
 
-        toES match {
-            case Some(x : String) => {
-                conn.setDoOutput(true)
-                log(Level.DEBUG, "Sending:")
-                log(Level.DEBUG, x)
-                val writer = new OutputStreamWriter(conn.getOutputStream)
-                writer.write(x)
-                writer.flush
-                writer.close
+        log(Level.DEBUG, method + " request to " + host + "/" + path)
+
+        val response : ClientResponse = method match {
+            case "GET" => {
+                r.get(classOf[ClientResponse])
             }
-            case None => // do nothing
-        }
-
-        val stream = try {
-            conn.getInputStream
-        } catch {
-            case x : FileNotFoundException => conn.getErrorStream
-            case x : IOException => conn.getErrorStream
-        }
-        val buffer = new StringBuilder("")
-
-        if(stream != null) {
-            val reader = new BufferedReader(new InputStreamReader(stream))
-            var line = reader.readLine
-            while((line != null)) {
-                buffer.append(line)
-                line = reader.readLine
+            case "POST" => {
+                content match {
+                    case Some(x : String) => r.post(classOf[ClientResponse], x)
+                    case None => r.post(classOf[ClientResponse])
+                }
             }
-            reader.close
+            case "DELETE"=> {
+                r.delete(classOf[ClientResponse])
+            }
+            case "HEAD" => {
+                r.head
+            }
+            case "PUT" => {
+                content match {
+                    case Some(x : String) => r.put(classOf[ClientResponse], x)
+                    case None => r.put(classOf[ClientResponse])
+                }
+            }
         }
         
-        log(Level.DEBUG, "Response code is " + conn.getResponseCode)
+        val status = response.getStatus
+        val resp = response.getEntity(classOf[String])
         
-        log(Level.DEBUG, "Response is " + buffer.toString)
+        log(Level.DEBUG, "Response code is " + status)
         
-        (conn.getResponseCode, buffer.toString)
+        log(Level.DEBUG, "Response is " + resp)
+        
+        (status, resp)
     }
 }
