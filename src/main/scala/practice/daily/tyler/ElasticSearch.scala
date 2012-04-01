@@ -127,39 +127,32 @@ class ElasticSearch(val index : String) {
 
     def getActionCounts(id : Int, name : String) : Option[Map[String,BigInt]] = {
         
-        val json = (
-            "query" -> (
-                "wildcard" -> (
+        val json = Map(
+            "query" -> Map(
+                "wildcard" -> Map(
                     "action" -> name
                 )
-            )
-        ) ~
-        (
-            "filter" -> (
-                "term" -> (
+            ),
+            "filter" -> Map(
+                "term" -> Map(
                     "person.id" -> id
                 )
-            )
-        ) ~
-        (
-            "facets" -> (
-                "actions" -> (
-                    "terms" -> (
+            ),
+            "facets" -> Map(
+                "actions" -> Map(
+                    "terms" -> Map(
                         "field" -> "action"
-                    )
-                ) ~
-                (
-                    "facet_filter" -> (
-                        "term" -> (
+                    ),
+                    "facet_filter" -> Map(
+                        "term" -> Map(
                             "person.id" -> id
                         )
                     )
                 )
             )
         )
-        log(Level.DEBUG, pretty(render(json)))
         
-        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
 
@@ -227,25 +220,24 @@ class ElasticSearch(val index : String) {
         val action = Map("type" -> "string", "index" -> "not_analyzed")
         val timestamp = Map("type" -> "date", "format" -> "date_hour_minute_second") // yyyyMMdd'T'HHmmssZ
 
-        val json = (
-            "mappings" -> (
-                "action" -> (
-                    "properties" -> (
-                        ("action"   -> action) ~
-                        ("timestamp"-> timestamp) ~
-                        ("public"   -> (
-                                "properties" -> (
-                                    ("action"   -> action) ~
-                                    ("timestamp"-> timestamp)
+        val json = Map(
+            "mappings" -> Map(
+                "action" -> Map(
+                    "properties" -> Map(
+                        "action"   -> action,
+                        "timestamp"-> timestamp,
+                        "public"   -> Map(
+                                "properties" -> Map(
+                                    "action"   -> action,
+                                    "timestamp"-> timestamp
                                 )
                             )
                         )
                     )
                 )
             )
-        )
 
-        val response = callES(path = index, method = "POST", content = Some(pretty(render(json))))
+        val response = callES(path = index, method = "POST", content = Some(pretty(render(decompose(json)))))
         if(response._1 == 200) {
             return true
         }
