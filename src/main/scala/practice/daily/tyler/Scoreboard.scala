@@ -15,8 +15,8 @@ class Scoreboard() {
 
         try {
 
-            val es = new ElasticSearch("tdp")
-            val response = es.index(action)
+            val es = new ElasticSearch("tdp-actions")
+            val response = es.index("action", action)
 
         } catch {
             case ex => log.error(ex, "Error adding action", ex.getMessage)
@@ -53,7 +53,7 @@ class Scoreboard() {
 
     def getActionCountsByDate(userId : Int, actionName : String, days : Int) : Option[scala.collection.mutable.Map[String,BigInt]] = {
         
-         val es = new ElasticSearch("tdp")
+         val es = new ElasticSearch("tdp-actions")
          val actions = es.getActionCountsByDate(userId, actionName, days)
 
          // Return a 404 since we have nothing to return
@@ -67,7 +67,7 @@ class Scoreboard() {
 
     def getActionCounts(userId : Int, actionName : String) : Option[Map[String,BigInt]] = {
         
-         val es = new ElasticSearch("tdp")
+         val es = new ElasticSearch("tdp-actions")
          val actions = es.getActionCounts(userId, actionName)
 
          // Return a 404 since we have nothing to return
@@ -87,7 +87,7 @@ class Scoreboard() {
         val start = (page - 1) * count
         val end = (page * count) - 1
 
-        val es = new ElasticSearch("tdp")
+        val es = new ElasticSearch("tdp-actions")
         val timeline = es.getTimeline(userId)
 
         if(timeline.size < 1) {
@@ -101,7 +101,7 @@ class Scoreboard() {
 
         try {
 
-            val es = new ElasticSearch("tdp")
+            val es = new ElasticSearch("tdp-actions")
             val response = es.delete(userId)
 
         } catch {

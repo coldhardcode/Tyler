@@ -29,19 +29,19 @@ class ElasticSearch(val index : String) {
     }
     Logger.configure(config)
     
-    def index(action : String) {
+    def index(estype : String, action : String) {
 
         if(!this.verifyIndex) {
             this.createIndex
         }
 
         val uuid = UUID.randomUUID.toString
-        callES(path = "/" + index + "/actions/" + uuid, method = "PUT", content = Some(action))
+        callES(path = "/" + index + "/" + estype + "/" + uuid, method = "PUT", content = Some(action))
     }
     
-    def getone(id : String) {
+    def getone(estype : String, id : String) {
         
-        val response = callES(path = "/" + index + "/actions/" + id, method = "GET")
+        val response = callES(path = "/" + index + "/" + estype + "/" + id, method = "GET")
         response._2
     }
 
@@ -102,7 +102,7 @@ class ElasticSearch(val index : String) {
         
         log(Level.DEBUG, pretty(render(decompose(json))))
         
-        val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(decompose(json)))))
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
 
@@ -159,7 +159,7 @@ class ElasticSearch(val index : String) {
         )
         log(Level.DEBUG, pretty(render(json)))
         
-        val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(json))))
 
         val resJson = parse(response._2)
 
@@ -185,7 +185,7 @@ class ElasticSearch(val index : String) {
         ))
         log(Level.DEBUG, pretty(render(json)))
         
-        val response = callES(path = "/" + index + "/actions/_search", method = "POST", content = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(json))))
 
         val resJson = parse(response._2)
         
@@ -196,7 +196,7 @@ class ElasticSearch(val index : String) {
     
     def delete(id : Int) {
         
-        val response = callES(path = "/" + index + "/actions/_query?q=person.id:" + id, method = "DELETE")
+        val response = callES(path = "/" + index + "/action/_query?q=person.id:" + id, method = "DELETE")
         response._2
     }
 
@@ -229,7 +229,7 @@ class ElasticSearch(val index : String) {
 
         val json = (
             "mappings" -> (
-                "actions" -> (
+                "action" -> (
                     "properties" -> (
                         ("action"   -> action) ~
                         ("timestamp"-> timestamp) ~
