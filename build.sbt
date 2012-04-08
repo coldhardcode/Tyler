@@ -22,4 +22,4 @@ libraryDependencies ++= Seq(
 	"com.sun.jersey"            % "jersey-client"           % "1.12"
 )
 
-resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
+resolvers += "twitter.com" at "http://maven.twttr.com/"
