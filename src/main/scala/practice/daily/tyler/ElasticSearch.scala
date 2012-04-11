@@ -186,6 +186,30 @@ class ElasticSearch(val index : String) {
         
         tl.values.asInstanceOf[List[Map[String,Any]]]
     }
+  
+    def getPublicTimeline() : List[Map[String,Any]] = {
+
+        val json = (
+            "query" -> (
+                ("match_all" -> Map.empty[String,String])
+            )
+        ) ~
+        ("filter" -> (
+            "exists" -> (
+                "field" -> "public.action"
+            )
+        ))
+        log(Level.DEBUG, pretty(render(json)))
+        
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(json))))
+
+        val resJson = parse(response._2)
+
+        val publics = resJson \\ "public"
+        val tl = for { JField("public", x) <- publics } yield x
+        
+        tl.values.asInstanceOf[List[Map[String,Any]]]
+    }
     
     def delete(id : Int) {
         

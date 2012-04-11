@@ -18,7 +18,7 @@ class TylerServlet extends ScalatraServlet {
 
     val config = new LoggerConfig {
         node = ""
-        level = Level.DEBUG
+        level = Level.INFO
         handlers = new ConsoleHandlerConfig {
         // handlers = new SyslogHandlerConfig {
           // server = "localhost"
@@ -95,6 +95,18 @@ class TylerServlet extends ScalatraServlet {
                 halt(status = 404)
             }
         }
+    }
+
+    get("/public/timeline") {
+        
+        val pub = new Public()
+        val tl = pub.getTimeline(
+            page = params.getOrElse("page", "1").toInt,
+            count = params.getOrElse("count", "10").toInt
+        )
+
+        log(Level.DEBUG, pretty(render(decompose(tl))))
+        compact(render(decompose(tl)))
     }
 
     /**

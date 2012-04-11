@@ -80,5 +80,33 @@ class TylerServletSpec extends MutableScalatraSpec {
                 status mustEqual 200
             }
         }
+        
+        "have a public timeline" in {
+            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"public":{"action":"completed-test"}}""") {
+                status mustEqual 200
+            }
+
+            // Post a second action
+            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"public":{"action":"completed-test"}}""") {
+                status mustEqual 200
+            }
+
+            // Post a third (non-public) action
+            post("/user/2/action", """{"action":"completed-test","person":{"id":2}}""") {
+                status mustEqual 200
+            }
+            
+            Thread.sleep(1000) // ES needs a bit of time to commit
+            
+            get("/public/timeline") {
+                body mustEqual """[{"action":"completed-test"},{"action":"completed-test"}]"""
+                status mustEqual 200
+            }
+            
+            val params = List()
+            delete("/user/2", params) {
+                status mustEqual 200
+            }
+        }
     }
 }
