@@ -13,14 +13,12 @@ class Public() {
   /**
   * Get the public timeline
   */
-  def getTimeline(page : Int = 1, count : Int = 10) : List[Map[String,Any]] = {
+  def getTimeline(userId : Option[Int] = None, page : Int = 1, count : Int = 10) : List[Map[String,Any]] = {
 
     val start = (page - 1) * count
     val end = (page * count) - 1
   
     val es = new ElasticSearch("tdp-actions")
-    val timeline = es.getPublicTimeline()
-
-    timeline
+    es.getPublicTimeline(userId, page, count)
   }
 }

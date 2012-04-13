@@ -97,6 +97,19 @@ class TylerServlet extends ScalatraServlet {
         }
     }
 
+    get("/public/:id/timeline") {
+        
+        val pub = new Public()
+        val tl = pub.getTimeline(
+            Some(params("id").toInt),
+            page = params.getOrElse("page", "1").toInt,
+            count = params.getOrElse("count", "10").toInt
+        )
+
+        log(Level.DEBUG, pretty(render(decompose(tl))))
+        compact(render(decompose(tl)))
+    }
+
     get("/public/timeline") {
         
         val pub = new Public()

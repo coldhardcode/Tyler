@@ -187,21 +187,47 @@ class ElasticSearch(val index : String) {
         tl.values.asInstanceOf[List[Map[String,Any]]]
     }
   
-    def getPublicTimeline() : List[Map[String,Any]] = {
+    def getPublicTimeline(userId : Option[Int], page : Int, count : Int) : List[Map[String,Any]] = {
 
-        val json = (
-            "query" -> (
-                ("match_all" -> Map.empty[String,String])
+        val filter = userId match {
+            case Some(x : Int) => Map(
+                "and" -> List(
+                    Map(
+                        "exists" -> Map(
+                            "field" -> "public.action"
+                        )
+                    ),
+                    Map(
+                        "term" -> Map(
+                            "person.id" -> userId
+                        )
+                    )
+                )
             )
-        ) ~
-        ("filter" -> (
-            "exists" -> (
-                "field" -> "public.action"
+            case None => Map(
+                "exists" -> Map(
+                    "field" -> "public.action"
+                )
             )
-        ))
-        log(Level.DEBUG, pretty(render(json)))
+        }
+
+        val from = page match {
+            case x if x > 1 => (x - 1) * count
+            case _ => 0
+        }
+
+        val json = Map(
+            "sort" -> List("person.id", "timestamp"),
+            "from" -> from,
+            "size" -> count,
+            "query" -> Map(
+                "match_all" -> Map.empty[String,String]
+            ),
+            "filter" -> filter
+        )
+        log(Level.DEBUG, pretty(render(decompose(json))))
         
-        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
 
@@ -242,7 +268,7 @@ class ElasticSearch(val index : String) {
     def createIndex() : Boolean = {
 
         val action = Map("type" -> "string", "index" -> "not_analyzed")
-        val timestamp = Map("type" -> "date", "format" -> "date_hour_minute_second") // yyyyMMdd'T'HHmmssZ
+        val timestamp = Map("type" -> "date", "format" -> "date_hour_minute_second") // yyyyMMdd'T'HHmmss
 
         val json = Map(
             "mappings" -> Map(

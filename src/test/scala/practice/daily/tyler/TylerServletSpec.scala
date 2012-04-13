@@ -15,20 +15,20 @@ class TylerServletSpec extends MutableScalatraSpec {
                 status must_== 200
             }
         }
-
+        
         "return status 404 on GET of none-existent URL" in {
             get("/isnthere") {
                 status mustEqual 404
             }
         }
-
+        
         "have a sane lifecycle" in {
             post("/user/1/action", """{"action":"completed-test","person":{"id":1}}""") {
                 status mustEqual 200
             }
-
+        
             Thread.sleep(1000) // ES needs a bit of time to commit
-
+        
             get("/user/1/timeline") {
                 body mustEqual """[{"action":"completed-test","person":{"id":1}}]"""
                 status mustEqual 200
@@ -82,29 +82,51 @@ class TylerServletSpec extends MutableScalatraSpec {
         }
         
         "have a public timeline" in {
-            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"public":{"action":"completed-test"}}""") {
+            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"timestamp":"2012-01-01T12:00:00","public":{"action":"completed-test"}}""") {
                 status mustEqual 200
             }
 
             // Post a second action
-            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"public":{"action":"completed-test"}}""") {
+            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"timestamp":"2012-02-01T12:00:00","public":{"action":"completed-test"}}""") {
                 status mustEqual 200
             }
 
             // Post a third (non-public) action
-            post("/user/2/action", """{"action":"completed-test","person":{"id":2}}""") {
+            post("/user/2/action", """{"action":"completed-test","person":{"id":2},"timestamp":"2012-03-01T12:00:00"}""") {
+                status mustEqual 200
+            }
+    
+            post("/user/3/action", """{"action":"completed-test","person":{"id":3},"timestamp":"2012-01-01T12:00:00","public":{"action":"completed-test"}}""") {
+                status mustEqual 200
+            }
+
+            // Post a second action
+            post("/user/3/action", """{"action":"completed-test","person":{"id":3},"timestamp":"2012-02-01T12:00:00","public":{"action":"completed-test"}}""") {
+                status mustEqual 200
+            }
+
+            // Post a third (non-public) action
+            post("/user/3/action", """{"action":"completed-test","person":{"id":3},"timestamp":"2012-03-01T12:00:00"}""") {
                 status mustEqual 200
             }
             
             Thread.sleep(1000) // ES needs a bit of time to commit
-            
-            get("/public/timeline") {
+
+            get("/public/2/timeline") {
                 body mustEqual """[{"action":"completed-test"},{"action":"completed-test"}]"""
                 status mustEqual 200
             }
-            
+
+            // get("/public/timeline") {
+            //     body mustEqual """[{"action":"completed-test"},{"action":"completed-test"}]"""
+            //     status mustEqual 200
+            // }
+
             val params = List()
             delete("/user/2", params) {
+                status mustEqual 200
+            }
+            delete("/user/3", params) {
                 status mustEqual 200
             }
         }
