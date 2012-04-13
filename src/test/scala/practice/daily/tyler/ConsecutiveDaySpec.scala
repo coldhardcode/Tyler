@@ -25,14 +25,14 @@ class ConsecutiveDaySpec extends Specification {
                     "action" -> "goal-progress",
                     "timestamp" -> dateFormatter.format(Calendar.getInstance.getTime),
                     "person" -> Map(
-                        "id" -> 2
+                        "id" -> 21
                     )
                 )
             ))))
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            val oneCount = board.getActionCounts(2, "goal-progress")
+            val oneCount = board.getActionCounts(21, "goal-progress")
             oneCount must beSome
             oneCount.get must havePair("goal-progress" -> 1)
 
@@ -45,7 +45,7 @@ class ConsecutiveDaySpec extends Specification {
                         "action" -> "goal-progress",
                         "timestamp" -> dateFormatter.format(theCal.getTime),
                         "person" -> Map(
-                            "id" -> 2
+                            "id" -> 21
                         )
                     )
                 ))))
@@ -53,7 +53,7 @@ class ConsecutiveDaySpec extends Specification {
 
             Thread.sleep(1000) // ES needs a bit of time to commit
 
-            val twoCount = board.getActionCountsByDate(2, "goal-progress", 7)
+            val twoCount = board.getActionCountsByDate(21, "goal-progress", 7)
             twoCount must beSome
             twoCount.get.keys.size mustEqual 3
 
@@ -67,7 +67,7 @@ class ConsecutiveDaySpec extends Specification {
                          "action" -> "goal-progress",
                          "timestamp" -> dateFormatter.format(theCal.getTime),
                          "person" -> Map(
-                             "id" -> 2
+                             "id" -> 21
                          )
                      )
                  ))))
@@ -75,7 +75,7 @@ class ConsecutiveDaySpec extends Specification {
 
              Thread.sleep(1000) // ES needs a bit of time to commit
 
-             val threeCount = board.getActionCountsByDate(2, "goal-progress", 7)
+             val threeCount = board.getActionCountsByDate(21, "goal-progress", 7)
              threeCount must beSome
              threeCount.get.keys.size mustEqual 6
 
@@ -87,17 +87,17 @@ class ConsecutiveDaySpec extends Specification {
                          "action" -> "goal-progress",
                          "timestamp" -> dateFormatter.format(theCal.getTime),
                          "person" -> Map(
-                             "id" -> 2
+                             "id" -> 21
                          )
                      )
                  ))))
              } }
 
-             val fourCount = board.getActionCountsByDate(2, "goal-progress", 3)
+             val fourCount = board.getActionCountsByDate(21, "goal-progress", 3)
              fourCount must beSome
              fourCount.get.keys.size mustEqual 3
 
-             board.purge(2) mustEqual(true)
+             board.purge(21) mustEqual(true)
         }
     }
 }
