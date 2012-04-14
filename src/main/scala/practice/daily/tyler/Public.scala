@@ -19,11 +19,11 @@ class Public() {
   /**
   * Get the public timeline
   */
-  def getTimeline(page : Int = 1, count : Int = 10) : Map[BigInt,Any] = {
+  def getTimeline(page : Int = 1, count : Int = 10) : Map[String,Any] = {
 
     val es = new ElasticSearch("tdp-actions")
     val tl = es.getPublicTimeline(None, page, count)
 
-    tl.groupBy( s => s.get("person").asInstanceOf[Option[Map[String,BigInt]]].get.get("id").get )
+    tl.groupBy( s => s.get("person").asInstanceOf[Option[Map[String,BigInt]]].get.get("id").get.toString )
   }
 }

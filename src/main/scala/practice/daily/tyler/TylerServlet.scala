@@ -6,7 +6,6 @@ import java.util.ArrayList
 import org.scalatra._
 import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST._
-import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Printer._
 import net.liftweb.json.Serialization.{read,write}
 import scala.collection.JavaConversions._
@@ -86,9 +85,6 @@ class TylerServlet extends ScalatraServlet {
         // Return a 404 since we have nothing to return
         timeline match {
             case Some(tl) => {
-                // The timeline is already encoded as JSON so just convert the list into
-                // a string with mkString
-                log(Level.DEBUG, pretty(render(decompose(tl))))
                 compact(render(decompose(tl)))
             }
             case None => {
@@ -99,7 +95,7 @@ class TylerServlet extends ScalatraServlet {
     }
 
     get("/public/:id/timeline") {
-        
+
         val pub = new Public()
         val tl = pub.getUserTimeline(
             params("id").toInt,
@@ -119,8 +115,6 @@ class TylerServlet extends ScalatraServlet {
             count = params.getOrElse("count", "10").toInt
         )
 
-        println(tl)
-        // log(Level.DEBUG, pretty(render(decompose(tl))))
         compact(render(decompose(tl)))
     }
 

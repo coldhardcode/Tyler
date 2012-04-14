@@ -222,7 +222,7 @@ class ElasticSearch(val index : String) {
             ),
             "filter" -> filter
         )
-        
+
         val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
