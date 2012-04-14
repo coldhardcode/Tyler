@@ -4,16 +4,17 @@ import com.twitter.logging.{Level, Logger}
 import com.twitter.logging.config._
 import java.util.ArrayList
 import org.scalatra._
-import net.liftweb.json._
 import net.liftweb.json.Extraction._
+import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
+import net.liftweb.json.Printer._
 import net.liftweb.json.Serialization.{read,write}
 import scala.collection.JavaConversions._
 import scala.collection.mutable._
 
 class TylerServlet extends ScalatraServlet {
 
-    implicit val formats = DefaultFormats
+    implicit val formats = net.liftweb.json.DefaultFormats
     private val log = Logger.get(getClass)
 
     val config = new LoggerConfig {
@@ -100,8 +101,8 @@ class TylerServlet extends ScalatraServlet {
     get("/public/:id/timeline") {
         
         val pub = new Public()
-        val tl = pub.getTimeline(
-            Some(params("id").toInt),
+        val tl = pub.getUserTimeline(
+            params("id").toInt,
             page = params.getOrElse("page", "1").toInt,
             count = params.getOrElse("count", "10").toInt
         )
@@ -118,7 +119,8 @@ class TylerServlet extends ScalatraServlet {
             count = params.getOrElse("count", "10").toInt
         )
 
-        log(Level.DEBUG, pretty(render(decompose(tl))))
+        println(tl)
+        // log(Level.DEBUG, pretty(render(decompose(tl))))
         compact(render(decompose(tl)))
     }
 

@@ -100,8 +100,6 @@ class ElasticSearch(val index : String) {
             )
         )
         
-        log(Level.DEBUG, pretty(render(decompose(json))))
-        
         val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
@@ -166,19 +164,18 @@ class ElasticSearch(val index : String) {
   
     def getTimeline(id : Int) : List[Map[String,Any]] = {
 
-        val json = (
-            "query" -> (
-                ("match_all" -> Map.empty[String,String])
+        val json = Map(
+            "query" -> Map(
+                "match_all" -> Map.empty[String,String]
+            ),
+            "filter" -> Map(
+                "term" -> Map(
+                    "person.id" -> id
+                )
             )
-        ) ~
-        ("filter" -> (
-            "term" -> (
-                "person.id" -> id
-            )
-        ))
-        log(Level.DEBUG, pretty(render(json)))
+        )
         
-        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(json))))
+        val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 
         val resJson = parse(response._2)
         
@@ -225,7 +222,6 @@ class ElasticSearch(val index : String) {
             ),
             "filter" -> filter
         )
-        log(Level.DEBUG, pretty(render(decompose(json))))
         
         val response = callES(path = "/" + index + "/action/_search", method = "POST", content = Some(compact(render(decompose(json)))))
 

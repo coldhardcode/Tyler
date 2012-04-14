@@ -10,15 +10,20 @@ class Public() {
   private val log = Logger.get(getClass)
   implicit val formats = DefaultFormats // Brings in default date formats etc.
 
+  def getUserTimeline(userId : Int, page : Int = 1, count : Int = 10) : List[Map[String,Any]] = {
+
+    val es = new ElasticSearch("tdp-actions")
+    es.getPublicTimeline(Some(userId), page, count)
+  }
+
   /**
   * Get the public timeline
   */
-  def getTimeline(userId : Option[Int] = None, page : Int = 1, count : Int = 10) : List[Map[String,Any]] = {
+  def getTimeline(page : Int = 1, count : Int = 10) : Map[BigInt,Any] = {
 
-    val start = (page - 1) * count
-    val end = (page * count) - 1
-  
     val es = new ElasticSearch("tdp-actions")
-    es.getPublicTimeline(userId, page, count)
+    val tl = es.getPublicTimeline(None, page, count)
+
+    tl.groupBy( s => s.get("person").asInstanceOf[Option[Map[String,BigInt]]].get.get("id").get )
   }
 }
