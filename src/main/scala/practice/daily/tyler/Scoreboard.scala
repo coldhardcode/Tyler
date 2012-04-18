@@ -11,12 +11,12 @@ class Scoreboard() {
     private val log = Logger.get(getClass)
     implicit val formats = DefaultFormats // Brings in default date formats etc.
 
-    def addAction(action:String) : Boolean = {
+    def addAction(id: String, action: String) : Boolean = {
 
         try {
 
             val es = new ElasticSearch("tdp-actions")
-            val response = es.index("action", action)
+            val response = es.index(id = id, estype = "action", action = action)
 
         } catch {
             case ex => log.error(ex, "Error adding action", ex.getMessage)

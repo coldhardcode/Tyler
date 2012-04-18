@@ -34,13 +34,10 @@ class TylerServlet extends ScalatraServlet {
         </html>
     }
 
-    /**
-    * Create an action XXX Should this be a PUT?
-    */
-    post("/user/:id/action") {
-
+    post("/user/:userid/action/:id") {
+        /* XXX We should check hte json to make sure the user matches */
         val board = new Scoreboard()
-        val success = board.addAction(action = request.body)
+        val success = board.addAction(id = params("id"), action = request.body)
 
         if(!success) {
             halt(status = 500)

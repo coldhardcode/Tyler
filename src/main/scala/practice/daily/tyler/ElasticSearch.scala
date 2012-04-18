@@ -5,7 +5,7 @@ import com.twitter.logging.config._
 
 import java.net.{URL,HttpURLConnection}
 import java.text.SimpleDateFormat
-import java.util.{Date,UUID,TimeZone}
+import java.util.{Date,TimeZone}
 import com.sun.jersey.api.client.{Client,ClientResponse}
 import net.liftweb.json._
 import net.liftweb.json.Extraction._
@@ -29,14 +29,13 @@ class ElasticSearch(val index : String) {
     }
     Logger.configure(config)
     
-    def index(estype : String, action : String) {
+    def index(id: String, estype: String, action: String) {
 
         if(!this.verifyIndex) {
             this.createIndex
         }
 
-        val uuid = UUID.randomUUID.toString
-        callES(path = "/" + index + "/" + estype + "/" + uuid, method = "PUT", content = Some(action))
+        callES(path = "/" + index + "/" + estype + "/" + id, method = "PUT", content = Some(action))
     }
     
     def getone(estype : String, id : String) {

@@ -11,12 +11,12 @@ class TrophyCase() {
     private val log = Logger.get(getClass)
     implicit val formats = DefaultFormats // Brings in default date formats etc.
 
-    def addReward(action:String) : Boolean = {
+    def addReward(id:String, action:String) : Boolean = {
 
         try {
 
             val es = new ElasticSearch("tdp-rewards")
-            val response = es.index("reward", action)
+            val response = es.index(id = id, estype = "reward", action = action)
 
         } catch {
             case ex => log.error(ex, "Error adding reward", ex.getMessage)

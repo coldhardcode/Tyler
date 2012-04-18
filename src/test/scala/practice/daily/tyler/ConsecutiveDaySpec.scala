@@ -20,7 +20,7 @@ class ConsecutiveDaySpec extends Specification {
             val nowDate = rightNow.getTime();
             
             val board = new Scoreboard()
-            board.addAction(compact(render(decompose(
+            board.addAction(id = "ABCXYZ", action = compact(render(decompose(
                 Map(
                     "action" -> "goal-progress",
                     "timestamp" -> dateFormatter.format(Calendar.getInstance.getTime),
@@ -40,7 +40,7 @@ class ConsecutiveDaySpec extends Specification {
             (1 until 3) foreach { (x) => {
                 val theCal = Calendar.getInstance;
                 theCal.add(Calendar.DATE, -x)
-                board.addAction(compact(render(decompose(
+                board.addAction(id = "ABCXYZ-" + x, action = compact(render(decompose(
                     Map(
                         "action" -> "goal-progress",
                         "timestamp" -> dateFormatter.format(theCal.getTime),
@@ -62,7 +62,7 @@ class ConsecutiveDaySpec extends Specification {
              (4 until 7) foreach { (x) => {
                  val theCal = Calendar.getInstance;
                  theCal.add(Calendar.DATE, -x)
-                 board.addAction(compact(render(decompose(
+                 board.addAction(id = "ABCXYZ-" + x, action = compact(render(decompose(
                      Map(
                          "action" -> "goal-progress",
                          "timestamp" -> dateFormatter.format(theCal.getTime),
@@ -82,7 +82,7 @@ class ConsecutiveDaySpec extends Specification {
              (7 until 9) foreach { (x) => {
                  val theCal = Calendar.getInstance;
                  theCal.add(Calendar.DATE, -x)
-                 board.addAction(compact(render(decompose(
+                 board.addAction(id = "ABCXYZ-" + x, action = compact(render(decompose(
                      Map(
                          "action" -> "goal-progress",
                          "timestamp" -> dateFormatter.format(theCal.getTime),
