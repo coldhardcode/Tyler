@@ -100,7 +100,7 @@ class TylerServletSpec extends MutableScalatraSpec {
             }
         
             // Post a second action
-            post("/user/2/action/ABC127", """{"action":"completed-test","person":{"id":2},"timestamp":"2012-02-01T12:00:00","public":{"action":"completed-test","person":{"id":2}}}""") {
+            post("/user/2/action/ABC127", """{"action":"completed-test2","person":{"id":2},"timestamp":"2012-02-02T12:00:00","public":{"action":"completed-test2","person":{"id":2}}}""") {
                 status mustEqual 200
             }
         
@@ -126,12 +126,12 @@ class TylerServletSpec extends MutableScalatraSpec {
             Thread.sleep(1000) // ES needs a bit of time to commit
         
             get("/public/2/timeline") {
-                body mustEqual """[{"action":"completed-test","person":{"id":2}},{"action":"completed-test","person":{"id":2}}]"""
+                body mustEqual """[{"action":"completed-test2","person":{"id":2}},{"action":"completed-test","person":{"id":2}}]"""
                 status mustEqual 200
             }
         
             get("/public/timeline") {
-                body mustEqual """{"3":[{"action":"completed-test","person":{"id":3}},{"action":"completed-test","person":{"id":3}}],"2":[{"action":"completed-test","person":{"id":2}},{"action":"completed-test","person":{"id":2}}]}"""
+                body mustEqual """{"3":[{"action":"completed-test","person":{"id":3}},{"action":"completed-test","person":{"id":3}}],"2":[{"action":"completed-test2","person":{"id":2}},{"action":"completed-test","person":{"id":2}}]}"""
                 status mustEqual 200
             }
         
