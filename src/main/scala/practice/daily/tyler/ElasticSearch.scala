@@ -213,7 +213,7 @@ class ElasticSearch(val index : String) {
         }
 
         val json = Map(
-            "sort" -> List("person.id", Map("timestamp" -> "desc")),
+            "sort" -> Map("timestamp" -> "desc"),
             "from" -> from,
             "size" -> count,
             "query" -> Map(

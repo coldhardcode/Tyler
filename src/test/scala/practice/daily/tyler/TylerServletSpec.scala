@@ -94,7 +94,7 @@ class TylerServletSpec extends MutableScalatraSpec {
            }
        }
         
-        "have a public timeline" in {
+       "have a public timeline" in {
             post("/user/2/action/ABC126", """{"action":"completed-test","person":{"id":2},"timestamp":"2012-01-01T12:00:00","public":{"action":"completed-test","person":{"id":2}}}""") {
                 status mustEqual 200
             }
@@ -145,10 +145,10 @@ class TylerServletSpec extends MutableScalatraSpec {
                 status mustEqual 200
             }
         
-            get("/public/timeline") {
-                body mustEqual """{"3":[{"action":"completed-test","person":{"id":3}},{"action":"completed-test","person":{"id":3}}],"2":[{"action":"completed-test2","person":{"id":2}},{"action":"completed-test","person":{"id":2}}]}"""
-                status mustEqual 200
-            }
+            // get("/public/timeline") {
+            //     body mustEqual """{"3":[{"action":"completed-test","person":{"id":3}},{"action":"completed-test","person":{"id":3}}],"2":[{"action":"completed-test2","person":{"id":2}},{"action":"completed-test","person":{"id":2}}]}"""
+            //     status mustEqual 200
+            // }
         
             val params = List()
             delete("/user/2", params) {
@@ -158,5 +158,30 @@ class TylerServletSpec extends MutableScalatraSpec {
                 status mustEqual 200
             }
         }
+        
+        // "handle pagination" in {
+        //     (0 until 31) foreach { (x) => {
+        //         x match {
+        //             // Evens will be non-public
+        //             case (x: Int) if x % 2 == 0 => {
+        //                 post("/user/4/action/ABCPAGE" + x, """{"action":"completed-test","person":{"id":4},"timestamp":"2012-01-01T12:00:00"}""") {
+        //                     status mustEqual 200
+        //                 }
+        //             }
+        //             // Events will be non-public
+        //             case _ => {
+        //                 post("/user/4/action/ABCPAGE" + x, """{"action":"completed-test","person":{"id":4},"timestamp":"2012-01-01T12:00:00","public":{"action":"completed-test","person":{"id":4}}}""") {
+        //                     status mustEqual 200
+        //                 }
+        //             }
+        //         }
+        //     } }
+        // 
+        //     Thread.sleep(1000) // ES needs a bit of time to commit
+        // 
+        //     get("/public/4/timeline?page=1&count=10") {
+        //         status mustEqual 200
+        //     }
+        // }
     }
 }
