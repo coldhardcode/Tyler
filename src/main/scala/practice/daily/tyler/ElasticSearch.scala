@@ -226,8 +226,7 @@ class ElasticSearch(val index : String) {
 
         val resJson = parse(response._2)
 
-        val publics = resJson \\ "public"
-        val tl = for { JField("public", x) <- publics } yield x
+        val tl = for { JField("public", x) <- resJson } yield x
         
         tl.values.asInstanceOf[List[Map[String,Any]]]
     }
@@ -291,11 +290,15 @@ class ElasticSearch(val index : String) {
     
     def callES(path : String, method : String = "GET", content : Option[String] = None) : (Int, String) = {
         
-        
         val client = new Client
         val r = client.resource(host + "/" + path);
 
         log(Level.DEBUG, method + " request to " + host + "/" + path)
+
+        content match {
+            case Some(x: String) => log(Level.DEBUG, "Request is " + x)
+            case None => // Nothing
+        }
 
         val response : ClientResponse = method match {
             case "GET" => {
