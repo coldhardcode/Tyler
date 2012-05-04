@@ -249,10 +249,10 @@ class ElasticSearch(val index : String) {
     
     def verifyIndex() : Boolean = {
         
-        log(Level.DEBUG, "Checking on index '" + index + "'")
+        log(Level.DEBUG, "Checking on index '%s'", index)
         val response = callES(path = index, method = "HEAD")
         
-        log(Level.DEBUG, "Response was " + response._1)
+        log(Level.DEBUG, "Response was %s", response._1)
         if(response._1 == 200) {
             return true
         }
@@ -293,10 +293,10 @@ class ElasticSearch(val index : String) {
         val client = new Client
         val r = client.resource(host + "/" + path);
 
-        log(Level.DEBUG, method + " request to " + host + "/" + path)
+        log(Level.DEBUG, "Sent %s request to " + host + "/" + path, method)
 
         content match {
-            case Some(x: String) => log(Level.DEBUG, "Request is " + x)
+            case Some(x: String) => log(Level.DEBUG, "Request is %s", x)
             case None => // Nothing
         }
 
@@ -327,9 +327,9 @@ class ElasticSearch(val index : String) {
         val status = response.getStatus
         val resp = response.getEntity(classOf[String])
         
-        log(Level.DEBUG, "Response code is " + status)
+        log(Level.DEBUG, "Response code is %s", status)
         
-        log(Level.DEBUG, "Response is " + resp)
+        log(Level.DEBUG, "Response is %s", resp)
         
         (status, resp)
     }
