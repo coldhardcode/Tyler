@@ -21,7 +21,7 @@ class ElasticSearch(val index : String) {
 
     val config = new LoggerConfig {
         node = ""
-        level = Level.DEBUG
+        level = Level.ERROR
         handlers = new ConsoleHandlerConfig {
         // handlers = new SyslogHandlerConfig {
           // server = "localhost"
@@ -293,7 +293,7 @@ class ElasticSearch(val index : String) {
         val client = new Client
         val r = client.resource(host + "/" + path);
 
-        log(Level.DEBUG, "Sent %s request to " + host + "/" + path, method)
+        log(Level.DEBUG, "Sent %s request to %s/%s", method, host, path)
 
         content match {
             case Some(x: String) => log(Level.DEBUG, "Request is %s", x)
